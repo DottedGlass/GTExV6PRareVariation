@@ -17,11 +17,19 @@ def sample_dict_maker(SAMPLE_fh):
 	SAMPLE = open(SAMPLE_fh)
 	SAMPLE.readline()
 	sample_dict = {}
+	missing_data  = []
 	for line in SAMPLE:
-		sample, tissue = line.rstrip().split('\t')
-		if tissue != '':
-			sample_dict[sample] = tissue
+		split_line = line.rstrip().split('\t')
+		if len(split_line) == 2:
+			sample, tissue = split_line
+			if tissue != '':
+				sample_dict[sample] = tissue
+		else:
+			missing_data.append(line)
 	SAMPLE.close()
+	if missing_data != []:
+		print("Missing data on these line(s)")
+		print(missing_data)
 	return sample_dict
 
 def split_by_tissue(sample_dict, GTEX_fh, OUT_DIR, END):
@@ -34,7 +42,7 @@ def split_by_tissue(sample_dict, GTEX_fh, OUT_DIR, END):
 		if 'Name' in line:
 			header = line
 			break
-	
+
 	tissue_dict = {}
 	for sample in header[2:]:
 		if sample in sample_dict:
@@ -85,8 +93,3 @@ sample_dict = sample_dict_maker(SAMPLE_fh)
 
 ## Split GTEx combined file by tissue
 split_by_tissue(sample_dict, GTEX_fh, OUT_DIR, END)
-
-
-
-
-
