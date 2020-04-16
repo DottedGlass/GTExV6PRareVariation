@@ -56,7 +56,7 @@ def split_by_tissue(sample_dict, GTEX_fh, OUT_DIR, END):
 	for tissue in tissue_dict:
 		file_dict[tissue] = open(OUT_DIR + '/' + tissue + END, 'w')
 		out_names = header[tissue_dict[tissue]]
-		for i in xrange(len(out_names)):
+		for i in range(len(out_names)):
 			out_names[i] = '-'.join(out_names[i].split('-')[0:2])
 		file_dict[tissue].write('\t'.join(['Gene'] + out_names.tolist()) + '\n')
 
