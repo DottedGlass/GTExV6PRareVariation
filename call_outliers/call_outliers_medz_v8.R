@@ -87,11 +87,11 @@ genes = rownames(medz)
 
 ## Write out unmelted summary matrices
 header = matrix(c('GENE', colnames(counts)), nrow = 1)
-write.table(header, paste0(dir, '/data/outliers_medz_counts.txt'), sep = '\t', col.names = F, row.names = F, quote = F)
-write.table(header, paste0(dir, '/data/outliers_medz_zscores.txt'), sep = '\t', col.names = F, row.names = F, quote = F)
+write.table(header, paste0(dir, '/data/v8/outliers_medz_counts.txt'), sep = '\t', col.names = F, row.names = F, quote = F)
+write.table(header, paste0(dir, '/data/v8/outliers_medz_zscores.txt'), sep = '\t', col.names = F, row.names = F, quote = F)
 
-write.table(counts, paste0(dir, '/data/outliers_medz_counts.txt'), sep = '\t', col.names = F, row.names = T, quote = F, append = T)
-write.table(medz, paste0(dir, '/data/outliers_medz_zscores.txt'), sep = '\t', col.names = F, row.names = T, quote = F, append = T)
+write.table(counts, paste0(dir, '/data/v8/outliers_medz_counts.txt'), sep = '\t', col.names = F, row.names = T, quote = F, append = T)
+write.table(medz, paste0(dir, '/data/v8/outliers_medz_zscores.txt'), sep = '\t', col.names = F, row.names = T, quote = F, append = T)
 
 ## Pick outliers using median Z-score >= 2
 ## Remove individuals with >= 50 outliers
