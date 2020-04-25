@@ -27,4 +27,4 @@ zcat $gtex | awk '{if($3=="transcript" && $1 ~ /^[0-9]+$/){print substr($10,2,le
     > ${gtexprefix}_genetypes_autosomal.txt
 
 # for gencode annotation get lincRNA and prootein-coding exons, but also pad the internal exons by 5 base pairs
-~/.conda/envs/genomics/bin/python3.7 pad.gtf.exons.py $gencode | sort -k1,1 -k2,2n | uniq > ${gencodeprefix}_coding.lincRNA_padded.bed
+python3.7 pad.gtf.exons.py $gencode | sort -k1,1 -k2,2n | uniq > ${gencodeprefix}_coding.lincRNA_padded.bed
