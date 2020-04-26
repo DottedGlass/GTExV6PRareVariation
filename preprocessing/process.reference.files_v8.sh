@@ -23,7 +23,7 @@ bash gtf2TSS.sh <(zcat $gtex) > ${gtexprefix}_TSS.bed
 bash gtf2genebed.sh -t <(zcat $gtex) | awk '{print "chr"$0}' > ${gtexprefix}.bed
 
 # genetypes
-zcat $gtex | awk '{if($3=="transcript" && $1 ~ /^[0-9]+$/){print substr($10,2,length($10)-3)"\t"substr($14,2,length($14)-3)}}' \
+zcat $gtex | awk '{if($3=="transcript" && $1 ~ /^chr[0-9]+$/){print substr($10,2,length($10)-3)"\t"substr($14,2,length($14)-3)}}' \
     > ${gtexprefix}_genetypes_autosomal.txt
 
 # for gencode annotation get lincRNA and prootein-coding exons, but also pad the internal exons by 5 base pairs
