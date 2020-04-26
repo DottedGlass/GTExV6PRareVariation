@@ -8,7 +8,7 @@ library(doMC)
 ###
 ### Setup parallel processing
 ###
-doMC::registerDoMC(cores=6)
+doMC::registerDoMC(cores=5)
 
 ### Master directory
 dir = Sys.getenv('RAREVARDIR')
@@ -57,7 +57,7 @@ setkey(data, Gene)
 individs = colnames(data)[-c(1,2)]
 
 ## Read in list of GENCODE genes with types
-genes_types = read.table(paste0(dir,'/reference/gencode.v19.genes.v6p.patched_contigs_genetypes_autosomal.txt'), sep = '\t', header = F, stringsAsFactors = F)
+genes_types = read.table(paste0(dir,'/reference/gencode.v26.genes.v8.patched_contigs_genetypes_autosomal.txt'), sep = '\t', header = F, stringsAsFactors = F)
 
 ## Filter for protein_coding and lincRNA genes
 types_to_keep = c('protein_coding', 'lincRNA')
