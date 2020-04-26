@@ -8,7 +8,7 @@ library(doMC)
 ###
 ### Setup parallel processing
 ###
-doMC::registerDoMC(cores=5)
+doMC::registerDoMC(cores=12)
 
 ### Master directory
 dir = Sys.getenv('RAREVARDIR')
