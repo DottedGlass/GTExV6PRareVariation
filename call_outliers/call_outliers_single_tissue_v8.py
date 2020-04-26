@@ -15,7 +15,7 @@ dir = os.environ['RAREVARDIR']
 infile = dir + '/preprocessing/gtex_v8_normalized_expression.txt'
 outfile = dir + '/data/v8/outliers_singlez_picked.txt'
 noThreshPrefix = dir + '/data/v8/singlez/outliers_singlez_nothreshold_'
-genefile = dir + '/reference/gencode.v19.genes.v6p.patched_contigs_genetypes_autosomal.txt'
+genefile = dir + '/reference/gencode.v26.genes.v8.patched_contigs_genetypes_autosomal.txt'
 indivfile = dir + '/data/v8/outliers_medz_picked_counts_per_ind.txt'
 
 zscores = open(infile, 'r')
