@@ -1,7 +1,9 @@
 import os
+import operator
 
 dir = os.environ["RAREVARDIR"]
 dir = dir + '/reference/'
+output = dir + 'v8.genes.TSS.bed'
 
 genes_file = dir + 'v8.genes.lincRNA.protein.txt'
 tss_file = dir + 'gencode.v26.genes.v8.patched_contigs_TSS.bed'
@@ -13,18 +15,14 @@ with open (tss_file) as f:
     tss_all = [line.rstrip('\n').split('\t') for line in f]
 
 # find matching lines
-idx = []
+genes_set = set(genes)
+tss_all_genes = [line[3] for line in tss_all]
+idx = [i for i, item in enumerate(tss_all_genes) if item in genes_set]
 
-for i in range(len(genes)):
-    gene = genes[i]
-    for j in range(len(tss_all)):
-        tss_gene = tss_all[j][3]
-        if gene == tss_gene:
-            idx.append(j)
-
+# get TSS for target genes and write to file
 tss = [tss_all[x] for x in idx]
 
-with open(dir + 'v8.tss.txt', 'w') as f:
+with open(output, 'w') as f:
     for line in tss:
         for val in line:
             f.write(val + '\t')
