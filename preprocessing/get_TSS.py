@@ -1,3 +1,7 @@
+"""Subsets *patched_contigs_TSS.bed file (created by process.reference.files.sh)
+by the genes of interest (lincRNA and protein coding)
+"""
+
 import os
 import operator
 
