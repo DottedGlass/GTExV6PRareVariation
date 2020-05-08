@@ -84,7 +84,7 @@ python preprocessing/get_TSS.py
 #### Compute rare variants only from 103 African American individuals with WGS
 Get subset of wgs with only African American individuals
 ```
-bcftools view -S ${RAREVARDIR}/preprocessing/gtex_v8_wgs_individuals_AFA.txt GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz -o ${RAREVARDIR}/download/GTEx_v8_WGS_ARA.vcf.gz
+bcftools view -S ${RAREVARDIR}/preprocessing/gtex_v8_wgs_individuals_AFA.txt GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz -o ${RAREVARDIR}/download/gtex8/GTEx_v8_WGS_ARA.vcf.gz
 ```
 Compute allele frequency
 ```
