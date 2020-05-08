@@ -28,7 +28,5 @@ tss = [tss_all[x] for x in idx]
 
 with open(output, 'w') as f:
     for line in tss:
-        for val in line:
-            f.write(val + '\t')
-
+        f.write('\t'.join(line))
         f.write('\n')
