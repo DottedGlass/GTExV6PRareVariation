@@ -3,7 +3,6 @@ TSS_list = list of TSS
 oneKKG_vcf = vcf of 1000 genomes on african samples
 gtex_vcf = vcf of gtex v8
 multi_tissue_outliers = ${RAREVARDIR}/data/v8/outliers_singlez_picked.txt
-single_tissue_outliers = ${RAREVARDIR}/data/v8/outliers_medz_picked.txt
 
 # subset both vcf for variants within 10kb of genes in TSS_list
 subtract 10kb from start column of TSS_list. Call this TSS_list_10kb
@@ -19,11 +18,12 @@ loop through each variant in 1KG
       write this variant to a rare_variant_list
 
 # build the output file
-loop through all genes
+loop through all genes with at least 1 outlier individual
   identify rows on gtex_vcf (variants within 10kb of the gene)
-  loop on all individuals that are outliers for the gene
+  loop on all african individuals
     if variants are in the rare_variant_list
       add variant to col3 of output file
+      $chrom:$position:$major_allele:$variant_allele
 
 
 
