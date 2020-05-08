@@ -1,0 +1,32 @@
+# Input  files
+TSS_list = list of TSS
+oneKKG_vcf = vcf of 1000 genomes on african samples
+gtex_vcf = vcf of gtex v8
+tissue_outliers =
+
+# subset both vcf for variants within 10kb of genes in TSS_list
+subtract 10kb from start column of TSS_list. Call this TSS_list_10kb
+use bedtools to get intersection of TSS_list_10kb with both vcf files. Output is vcf file
+
+# compute allele frequencies
+use vcftools to compute frequencies (SNVs only) on both vcfs
+
+# find rare variants based on frequency <0.01 in both 1KG and GTEx
+loop through each variant in 1KG
+  if variant exists in GTEx
+    if variant frequency in both is <0.01
+      write this variant to a rare_variant_list
+
+# build the output file
+loop through all genes
+  identify rows on gtex_vcf (variants within 10kb of the gene)
+  loop on all individuals that are outliers for the gene
+    if variants are in the rare_variant_list
+      add variant to col3 of output file
+
+
+
+#output file format
+#Col1: Gene
+#Col2: Indiv
+#Col3: Comma separated list of variants
