@@ -1,3 +1,154 @@
+# Dependencies
+python2.7
+* numpy
+* pybedtools
+* pysam
+* scipy
+
+vcftools
+
+# Pipeline
+
+## Preparing reference files used for RIVER
+
+### Get list of subjects from v8
+```
+cat ${RAREVARDIR}/download/gtex8/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS.txt | awk -F "\t" 'NR>1{print $1}' \
+> ${RAREVARDIR}/preprocessing/gtex_v8_individuals_all_normalized_samples.txt
+```
+
+### Get list of African American subjects
+```
+cat ${RAREVARDIR}/download/gtex8/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS.txt | awk -F '\t' '{if ($5 == 2) print $1;}' \
+> ${RAREVARDIR}/preprocessing/gtex_v8_individuals_AFA.txt
+```
+
+### Get list of African American subjects with available WGS data
+```
+vcf-query -l ${RAREVARDIR}/download/gtex8/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz \
+> ${RAREVARDIR}/preprocessing/gtex_v8_wgs_individuals.txt
+
+awk 'NR==FNR { lines[$0]=1; next } $0 in lines' ${RAREVARDIR}/preprocessing/gtex_v8_wgs_individuals.txt ${RAREVARDIR}/preprocessing/gtex_v8_individuals_AFA.txt > ${RAREVARDIR}/preprocessing/gtex_v8_wgs_individuals_AFA.txt
+```
+
+### Get list of tissue names
+```
+ls ${RAREVARDIR}/preprocessing/PEER_gtex8 | cut -d. -f1 \
+> ${RAREVARDIR}/preprocessing/gtex_v8_tissues_all_normalized_samples.txt
+```
+
+### Make flat files from normalized data
+Flat file is `preprocessing/gtex_v8_normalized_expression.txt`
+```
+cd preprocessing
+python gather_filter_normalized_expression_v8.py
+```
+
+### gene locations from gencode
+`gencode.v26.genes.v8.patched_contigs_genetypes_autosomal.txt` is empty for some reason
+```
+cd preprocessing
+
+bash process.reference.files_v8.sh ${RAREVARDIR}/download/gtex8/gencode.v26.GRCh38.genes.gtf.gz ${RAREVARDIR}/download/gencode/gencode.v26.annotation.gtf
+```
+
+## Outlier calling from normalized expression data
+### Call multi-tissue outliers
+```
+Rscript call_outliers/call_outliers_medz_v8.R
+```
+Note that this version outputs `preprocessing/gtex_v8_wgs_ids_outlier_filtered.txt`, which contains individuals of multiple ancestries, not just European ancestry.
+
+### Call single-tissue outliers
+```
+python call_outliers/call_outliers_single_tissue_v8.py
+```
+
+### Filter out African American outliers
+
+
+## Making rare variant calls on African American individuals
+
+
+### [debugging] Get TSS of relevant genes
+Get list of relevant genes (lincRNA and protein coding only)
+```
+cut -f1 ${RAREVARDIR}/reference/gencode.v26.GRCh38.genes_genetypes_autosomal_PCandlinc_only.txt > ${RAREVARDIR}/reference/v8.genes.lincRNA.protein.txt
+```
+Use that list to subset `gencode.v26.genes.v8.patched_contigs_TSS.bed` and get TSS. Output file is called `reference/v8.genes.TSS.bed`
+```
+python preprocessing/get_TSS.py
+```
+
+### [debugging] Check for rare variants
+#### Compute rare variants only from 103 African American individuals with WGS
+Get subset of wgs with only African American individuals
+```
+bcftools view -S ${RAREVARDIR}/preprocessing/gtex_v8_wgs_individuals_AFA.txt GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz -o ${RAREVARDIR}/download/GTEx_v8_WGS_ARA.vcf.gz
+```
+Compute allele frequency
+```
+vcftools --gzvcf ${RAREVARDIR}/download/gtex8/GTEx_v8_WGS_ARA.vcf.gz --freq --remove-indels --remove-filtered-all --out ${RAREVARDIR}/download/gtex8/GTEx_v8_WGS_ARA_2
+```
+
+### Get 10kb positions for TSS of genes
+```
+cat ${RAREVARDIR}/reference/gencode.v26.genes.v8.patched_contigs_TSS.bed | awk '{print $1, $2-1000, $3-1, $4}' OFS='\t' \
+| grep -v '^chrM' > ${RAREVARDIR}/reference/gencode.v26.genes.v8.10kb_TSS.bed
+
+grep -v '^chrM' ${RAREVARDIR}/reference/gencode.v26.genes.v8.10kb_TSS.bed > ${RAREVARDIR}/reference/gencode.v26.genes.v8.10kb_TSS.bed
+```
+
+Use bedtools to get intersection on TSS file with GTEx SNVs
+```
+bedtools intersect -header -a ${RAREVARDIR}/data/wgs/GTEx_AFA.vcf.gz -b ${RAREVARDIR}/reference/gencode.v26.genes.v8.10kb_TSS.bed > ${RAREVARDIR}/data/wgs/GTEx_AFA_10kb_TSS.vcf
+```
+
+## RIVER on African American individuals
+
+#### [Step 0] Prepare  GTEx data files
+
+##### Get list of African American individuals that have WGS in GTExv8
+```
+grep -f ${RAREVARDIR}/preprocessing/gtex_v8_individuals_AFA.txt ${RAREVARDIR}/preprocessing/gtex_v8_wgs_ids_outlier_filtered.txt \
+> ${RAREVARDIR}/preprocessing/gtex_v8_wgs_ids_outlier_filtered_AFA.txt
+```
+
+#### Expression Ensembl_ID file
+There exists a `gene_ensembl_ids.txt` in the repo, which is a list of genes we are restricting to and was used in v6p analysis. May need to reproduce a v8 specific version.
+
+#### [Step 1] Generate matlab annotation files with both indivs and genes considered in GTEx v6p and gene expression matrix used for calling outliers later
+```
+cd RIVER
+
+matlab -nodisplay -nodesktop -nosplash -nojvm -singleCompThread -r "run('generate_annotations_matlab_v8.m')"
+matlab -nodisplay -nodesktop -nosplash -nojvm -singleCompThread -r "run('${RAREVARDIR}/RIVER/code/generate_expmat_44tissues.m')"
+```
+#### [Step 4] Extract a list of targeted regions for genes of interest
+```
+matlab -nodisplay -nodesktop -nosplash -nojvm -singleCompThread -r "run('${RAREVARDIR}/RIVER/code/generate_regions.m')"
+```
+
+
+# Figures and Analysis
+
+## Get genes with African American individuals as multi-tissue outliers
+```
+grep -f ${RAREVARDIR}/preprocessing/gtex_v8_individuals_AFA.txt ${RAREVARDIR}/data/outliers_medz_picked.txt
+```
+
+## Compare number of genes for which a GTEx individual is a multi-tissue outlier
+
+### subset v8 individuals by v6p individuals (441 subjects shared between v6p and v8)
+```
+grep -f ${RAREVARDIR}/preprocessing/gtex_v8_individuals_all_normalized_samples.txt ${RAREVARDIR}/data/outliers_medz_picked_counts_per_ind.txt \
+> ${RAREVARDIR}/figures/outliers_medz_picked_counts_per_ind_v6p.txt
+
+grep -f ${RAREVARDIR}/preprocessing/gtex_2015-01-12_individuals_all_normalized_samples.txt ${RAREVARDIR}/data/v8/outliers_medz_picked_counts_per_ind.txt \
+> ${RAREVARDIR}/figures/outliers_medz_picked_counts_per_ind_v8.txt
+```
+
+
 # Pipeline
 ## Expression data correction and normalization
 Generates processed data that can be downloaded from https://s3-us-west-2.amazonaws.com/gtex-v6p-rare-variation-data/GTExV6PRareVariationData.tar.gz. <br>
