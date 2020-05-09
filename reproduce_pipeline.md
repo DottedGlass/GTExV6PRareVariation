@@ -88,7 +88,7 @@ bcftools view -S ${RAREVARDIR}/preprocessing/gtex_v8_wgs_individuals_AFA.txt GTE
 ```
 Compute allele frequency
 ```
-vcftools --gzvcf ${RAREVARDIR}/download/gtex8/GTEx_v8_WGS_ARA.vcf.gz --freq --remove-indels --remove-filtered-all --out ${RAREVARDIR}/download/gtex8/GTEx_v8_WGS_ARA_2
+vcftools --gzvcf ${RAREVARDIR}/download/gtex8/GTEx_v8_WGS_ARA.vcf.gz --freq --remove-indels --remove-filtered-all --out ${RAREVARDIR}/download/gtex8/GTEx_v8_WGS_ARA
 ```
 
 ### Get 10kb positions for TSS of genes
