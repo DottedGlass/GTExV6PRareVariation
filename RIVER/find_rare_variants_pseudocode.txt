@@ -12,10 +12,13 @@ use bedtools to get intersection of TSS_list_10kb with both vcf files. Output is
 use vcftools to compute frequencies (SNVs only) on both vcfs
 
 # find rare variants based on frequency <0.01 in both 1KG and GTEx
-loop through each variant in 1KG
-  if variant exists in GTEx
-    if variant frequency in both is <0.01
-      write this variant to a rare_variant_list
+loop through each variant in GTEx
+  if variant in GTEx is <0.01
+    if variant exists in 1KG
+      if variant frequency in both is <0.01
+        write this variant to rare_variant_list
+    else
+        write this variant to rare_variant_list
 
 # build the output file
 loop through all genes with at least 1 outlier individual
