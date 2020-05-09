@@ -2,7 +2,7 @@
 TSS_list = list of TSS
 oneKKG_vcf = vcf of 1000 genomes on african samples
 gtex_vcf = vcf of gtex v8
-multi_tissue_outliers = ${RAREVARDIR}/data/v8/outliers_singlez_picked.txt
+multi_tissue_outliers = ${RAREVARDIR}/data/v8/outliers_medz_picked.txt
 
 # subset both vcf for variants within 10kb of genes in TSS_list
 subtract 10kb from start column of TSS_list. Call this TSS_list_10kb
