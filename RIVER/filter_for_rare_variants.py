@@ -50,19 +50,28 @@ def filter_rare(gtex_df, gtex_pos_dict, oneKG_df, oneKG_dict, MAF_thres = 0.01):
                 allele_list_KG = list(oneKG_df.iloc[i,:][4:]) # list causes NaN to be cast as float nan
                 frq_KG = {x.split(':')[0]:float(x.split(':')[1]) for x in allele_list_KG if isinstance(x,str)}
 
-                # check if allele in GTEx has >= MAF_thres in 1KG
-                # this step filters out a variant if all the GTEx rare alleles are
-                # not rare in 1KG
-                common_alleles = [x for x in rare_alleles if frq_KG[x] >= MAF_thres] #TODO deal with allele in GTEx but not in 1KG
+                # check if alleles in GTEx are present in 1KG
+                if all(x in frq_KG for x in rare_alleles):
+                    # check if allele in GTEx has >= MAF_thres in 1KG
+                    # this step filters out a variant if all the GTEx rare alleles are
+                    # not rare in 1KG
+                    common_alleles = [x for x in rare_alleles if frq_KG[x] >= MAF_thres]
 
-                if len(rare_alleles) > len(common_alleles):
+                    if len(rare_alleles) > len(common_alleles):
+                        # shared position, allele in GTEx is rare (0 < AF < MAF_thres), and
+                        # allele in 1KG is rare (AF < MAF_thres)
+                        filter_idx.append(i)
+                else:
+                    # shared position, allele in GTEx but not in 1KG
                     filter_idx.append(i)
 
             else:
+                # position in GTEx but not in 1KG
                 filter_idx.append(i)
 
     # filter for rare variants in GTEx
     gtex_rare_df = gtex_df.iloc[filter_idx,:]
+    print("Keeping " + str(len(filter_idx) + " rare variants"))
     return(gtex_rare_df)
 
 def save_filtered_frq(gtex_file,gtex_rare_df,outfile):
