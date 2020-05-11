@@ -32,6 +32,9 @@ def filter_rare(gtex_df, gtex_pos_dict, oneKG_df, oneKG_dict, MAF_thres = 0.01):
     filter_idx = []
     # loop through each variant in GTEx
     for i in range(len(gtex_df)):
+        if i % 100000 == 99999:
+            print("Checked " + str(i+1) + "positions")
+
         # get allele frequency as dictionary (removes NaN entries)
         allele_list = list(gtex_df.iloc[i,:][4:]) # list causes NaN to be cast as float nan
         frq = {x.split(':')[0]:float(x.split(':')[1]) for x in allele_list if isinstance(x,str)}
@@ -47,6 +50,8 @@ def filter_rare(gtex_df, gtex_pos_dict, oneKG_df, oneKG_dict, MAF_thres = 0.01):
             if gtex_pos in oneKG_dict:
 
                 # get allele freqency from 1KG
+                if len(list(oneKG_df.iloc[i,:])) < 5:
+                    print(list(oneKG_df.iloc[i,:]))
                 allele_list_KG = list(oneKG_df.iloc[i,:][4:]) # list causes NaN to be cast as float nan
                 frq_KG = {x.split(':')[0]:float(x.split(':')[1]) for x in allele_list_KG if isinstance(x,str)}
 
