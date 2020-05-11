@@ -53,9 +53,9 @@ def filter_rare(gtex_df, gtex_pos_dict, oneKG_df, oneKG_dict, MAF_thres = 0.01):
                 # check if allele in GTEx has >= MAF_thres in 1KG
                 # this step filters out a variant if all the GTEx rare alleles are
                 # not rare in 1KG
-                common_alleles = [x for x in rare_alleles if frq_KG[x] >= MAF_thres]
+                common_alleles = [x for x in rare_alleles if frq_KG[x] >= MAF_thres] #TODO deal with allele in GTEx but not in 1KG
 
-                if len(rare_alleles) > len(common_alleles);
+                if len(rare_alleles) > len(common_alleles):
                     filter_idx.append(i)
 
             else:
