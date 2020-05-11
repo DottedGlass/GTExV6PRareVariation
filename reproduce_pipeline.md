@@ -84,7 +84,7 @@ python preprocessing/get_TSS.py
 #### Compute rare variants only from 103 African American individuals with WGS
 Get subset of wgs with only African American individuals
 ```
-bcftools view -S ${RAREVARDIR}/preprocessing/gtex_v8_wgs_individuals_AFA.txt GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz -o ${RAREVARDIR}/download/gtex8/GTEx_v8_WGS_ARA.vcf.gz
+bcftools view -S ${RAREVARDIR}/preprocessing/gtex_v8_wgs_individuals_AFA.txt ${RAREVARDIR}/download/gtex8/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz -O z -o ${RAREVARDIR}/download/gtex8/GTEx_v8_WGS_ARA.vcf.gz
 ```
 Compute allele frequency
 ```
@@ -102,6 +102,23 @@ grep -v '^chrM' ${RAREVARDIR}/reference/gencode.v26.genes.v8.10kb_TSS.bed > ${RA
 Use bedtools to get intersection on TSS file with GTEx SNVs
 ```
 bedtools intersect -header -a ${RAREVARDIR}/data/wgs/GTEx_AFA.vcf.gz -b ${RAREVARDIR}/reference/gencode.v26.genes.v8.10kb_TSS.bed > ${RAREVARDIR}/data/wgs/GTEx_AFA_10kb_TSS.vcf
+```
+
+Use bcftools to get intersection on TSS file with 1KG SNVs (add samples)
+```
+bcftools view --output-file chr1_TSS.vcf.gz --output-type z --regions-file v8.genes.TSS_minus10k.bed --types snps ALL.chr1.shapeit2_integrated_v1a.GRCh38.20181129.phased.vcf.gz
+```
+### Filter for rare variants
+Scripts are in RIVER folder
+
+find rare variants based on frequency <0.01 in both 1KG and GTEx
+```
+python filter_for_rare_variants.py $RAREVARDIR/reference/GTEx_AFA_10kb_TSS_AF.frq $RAREVARDIR/reference/chrALL_TSS_AFR_v42_AF.frq $RAREVARDIR/reference/GTEx_AFA_10kb_TSS_AF_rare.frq
+```
+
+Make gene-individual pair file with list of rare variants
+```
+python make_gene_indiv_variants.py $RAREVARDIR/
 ```
 
 ## RIVER on African American individuals
