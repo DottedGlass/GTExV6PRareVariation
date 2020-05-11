@@ -21,7 +21,7 @@ loop through each variant in GTEx
         write this variant to rare_variant_list
 
 # build the output file
-loop through all genes with at least 1 outlier individual
+loop through all genes with at least 1 outlier individual (multi_tissue_outliers)
   identify rows on gtex_vcf (variants within 10kb of the gene)
   loop on all african individuals
     if variants are in the rare_variant_list
