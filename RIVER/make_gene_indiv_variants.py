@@ -70,19 +70,19 @@ for chr in chr_list[:2]:
         # find rows in rare_var that are within a 10kb TSS of the outlier gene
         start = row['start']; stop = row['stop'] + 1
         idx_bool = rare_var_chr['pos0'].between(start,stop)
-        rare_var_chr_idx = list(rare_var_chr[idx_bool].index)
+        rare_var_chr_index = list(rare_var_chr[idx_bool].index)
 
         # keep track of the gene associated with these variants
-        for idx in rare_var_chr_idx:
-            if idx not in gene_dict.keys():
-                gene_dict[idx] = row['gene']
+        for x in rare_var_chr_index:
+            if x not in gene_dict.keys():
+                gene_dict[x] = row['gene']
 
-rare_var_idx = list(gene_dict.keys())
-rare_var_idx.sort()
-rare_var = rare_var.iloc[rare_var_idx,:]
+rare_var_index = list(gene_dict.keys())
+rare_var_index.sort()
+rare_var = rare_var.loc[rare_var_index,:]
 
 # add column for the gene associated with the position in rare_var
-genes = [gene_dict[x] for x in rare_var_idx]
+genes = [gene_dict[x] for x in rare_var_index]
 rare_var.insert(0, 'gene', genes)
 
 # build dataframe from vcf file with columns
@@ -91,7 +91,7 @@ vcf_df = pd.DataFrame({'chrom':vcf['variants/CHROM'], 'pos':vcf['variants/POS'],
 vcf_df_chrom_pos = vcf_df['chrom'] + ':' + vcf_df['pos'].astype(str)
 vcf_df.insert(vcf_df.shape[1], 'chrom:pos', vcf_df_chrom_pos)
 dup_index = vcf_df.drop_duplicates('chrom:pos').index # remove duplicates
-vcf_df = vcf_df.iloc[dup_index,:]
+vcf_df = vcf_df.loc[dup_index,:]
 
 # get genotype data from vcf file
 genotype = vcf['calldata/GT']
