@@ -89,7 +89,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Filter for rare variants based on allele frequency <0.01 in both GTEx and 1KG')
     parser.add_argument('GTEx', type=str, help='Input dir for GTEx frequency file')
     parser.add_argument('oneKG', type=str, help='Input dir for 1KG frequency file')
-    parser.add_argument('outfile' type=str, help='output file for filtered list of rare variants')
+    parser.add_argument('outfile', type=str, help='output file for filtered list of rare variants')
     args = parser.parse_args()
 
     gtex_file = args.GTEx
