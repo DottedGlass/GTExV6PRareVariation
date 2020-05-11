@@ -86,19 +86,19 @@ def filter_rare(gtex_df, gtex_pos_dict, oneKG_df, oneKG_dict, MAF_thres = 0.01):
 # TODO: vectorized functions to filter for rare variants
 # def get_allele_frq_df(df):
 #     """make new dataframes from gtex and 1KG with the following 5 columns
-#     position major major_frq minor minor_frq
+#     position ref ref_frq alt alt_frq
 #     """
 #     # get positions
 #     pos = df[0] + ":" + df[1].astype(str)
 #
 #     # get alleles and allele frequencies
-#     major = df[4].str.split(":", expand = True)
-#     major[1] = major[1].astype(float)
-#     minor = df[5].str.split(":", expand = True)
-#     minor[1] = minor[1].astype(float)
+#     ref = df[4].str.split(":", expand = True)
+#     ref[1] = ref[1].astype(float)
+#     alt = df[5].str.split(":", expand = True)
+#     alt[1] = alt[1].astype(float)
 #
 #     # make new dataframe
-#     df_new = pd.DataFrame({'position':pos, 'major':major[0], 'major_frq':major[1], 'minor':minor[0], 'minor_frq':minor[1]})
+#     df_new = pd.DataFrame({'position':pos, 'ref':ref[0], 'ref_frq':ref[1], 'alt':alt[0], 'alt_frq':alt[1]})
 #
 #     return df_new
 #
@@ -108,7 +108,7 @@ def filter_rare(gtex_df, gtex_pos_dict, oneKG_df, oneKG_dict, MAF_thres = 0.01):
 #     """
 #
 #     # make new dataframes from gtex and 1KG with the following 5 columns
-#     # position major major_frq minor minor_frq
+#     # position ref ref_frq alt alt_frq
 
 def save_filtered_frq(gtex_file,gtex_rare_df,outfile):
     """Saves gtex_rare_df as tab delimited file with same headers as gtex_file
