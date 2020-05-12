@@ -22,7 +22,7 @@ afr_1kg=/scratch/groups/abattle4/jessica/ATG/Final/1KG_AFR_biallelic
 # vcftools --gzvcf ${afr_1kg}/AFR_1KG_chr${j}.vcf.gz --freq --out $RAREVARDIR/download/1KG/AFR_1KG_chr${j}_af
 # done
 #
-# oneKG_vcf_frq=$RAREVARDIR/reference/AFR_1KG_chrALL_af.frq
+oneKG_vcf_frq=$RAREVARDIR/reference/AFR_1KG_chrALL_af.frq
 # head -n1 $RAREVARDIR/download/1KG/AFR_1KG_chr1_af.frq > $oneKG_vcf_frq
 # for j in {1..22}; do
 # tail -n +2 $RAREVARDIR/download/1KG/AFR_1KG_chr${j}_af.frq >> $oneKG_vcf_frq
@@ -30,7 +30,7 @@ afr_1kg=/scratch/groups/abattle4/jessica/ATG/Final/1KG_AFR_biallelic
 
 # make gtex frequency file
 gtex_vcf_frq=$RAREVARDIR/reference/GTEx_AFA_AF.frq
-vcftools --gzvcf ${gtex_vcf} --freq --out $RAREVARDIR/reference/GTEx_AFA_AF
+# vcftools --gzvcf ${gtex_vcf} --freq --out $RAREVARDIR/reference/GTEx_AFA_AF
 
 ~/.conda/envs/genomics/bin/python $gtex_code/filter_for_rare_variants.py \
 $gtex_vcf_frq \
