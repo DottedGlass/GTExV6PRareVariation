@@ -1,10 +1,11 @@
 # Dependencies
 python2.7
+python3
 * numpy
 * pybedtools
 * pysam
 * scipy
-
+* scikit-allel
 vcftools
 
 # Pipeline
@@ -116,9 +117,18 @@ find rare variants based on frequency <0.01 in both 1KG and GTEx
 python filter_for_rare_variants.py $RAREVARDIR/reference/GTEx_AFA_10kb_TSS_AF.frq $RAREVARDIR/reference/chrALL_TSS_AFR_v42_AF.frq $RAREVARDIR/reference/GTEx_AFA_10kb_TSS_AF_rare.frq
 ```
 
+Keep only SNPs in GTEx vcf (GTEx_AFA_10kb_TSS.vcf has indels for some reason)
+```
+bcftools view --output-file GTEx_AFA_10kb_TSS.vcf.gz --output-type z --types snps GTEx_AFA_10kb_TSS.vcf
+```
+
 Make gene-individual pair file with list of rare variants
 ```
-python make_gene_indiv_variants.py $RAREVARDIR/
+python make_gene_indiv_variants.py data/v8/outliers_medz_picked.txt \
+download/gtex8/GTEx_AFA_10kb_TSS.vcf.gz \
+reference/v8.genes.TSS_minus10k.bed \
+reference/GTEx_AFA_10kb_TSS_AF_rare.frq \
+reference/gene_indiv_variants.txt
 ```
 
 ## RIVER on African American individuals
