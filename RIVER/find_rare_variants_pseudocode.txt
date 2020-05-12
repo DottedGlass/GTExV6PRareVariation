@@ -41,3 +41,42 @@ for each rare variant, find individuals that have the rare variant
 #Col1: Gene
 #Col2: Indiv
 #Col3: Comma separated list of variants
+
+
+## count number of variants by african individual in gtex
+gtex_vcf = african individuals, SNP only, --max-missing-count 10
+gtex_vcf.frq = frequency file
+1KG_vcf.frq = frequency file from 1KG vcf with african individuals only, SNP only, --max-missing-count 10
+
+
+```
+bcftools view --output-file GTEx_v8_WGS_ARA.recode_SNP.vcf.gz --output-type z --types snps GTEx_v8_WGS_ARA.recode.vcf.gz
+```
+
+get gtex_vcf with african indivuals, SNP only, --max-mssing-count 10
+create frequency file from gtex_vcf
+use filter_for_rare_variants.py on gtex_vcf.frq and 1KG_vcf.frq to get gtex_vcf_rare.frq
+use awk to split gtex_vcf_rare.frq into two frq files
+  out_file_1 has the reference allele (column 5) as the minor allele
+  out_file_2 has the alternate allele (column 6) as the minor allele
+```
+tail -n +2 ${infile} | awk 'BEGIN {OFS="\t"} {split($NF,last,":");  if((last[2] < 0.5)) {print $1,$2-1,$2}}' > out_file1.bed
+tail -n +2 ${infile} | awk 'BEGIN {OFS="\t"} {split($NF,last,":");  if((last[2] > 0.5)) {print $1,$2-1,$2}}' > out_file2.bed
+```
+
+subset gtex_vcf with bcftools
+```
+bcftools --output-file gtex_vcf_1.vcf.gz --output-type z --regions-file out_file1.bed --no-header gtex_vcf
+bcftools --output-file gtex_vcf_2.vcf.gz --output-type z --regions-file out_file2.bed --no-header gtex_vcf
+```
+
+
+case 1: using out_file_1 and gtex_vcf
+  subset gtex_vcf by variant locations (CHROM and POS) in out_file_1
+  count the number of times that 0's that show up in columns of the individual in gtex_vcf
+
+case 2: using out_file_2 and gtex_vcf
+  subset gtex_vcf by variant locations (CHROM and POS) in out_file_2
+  count the number of times that 1's that show up in columns of the individual in gtex_vcf
+
+add the counts for each columns of the individual
