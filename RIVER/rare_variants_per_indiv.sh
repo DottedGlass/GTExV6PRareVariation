@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=rare_var_per_indiv
-#SBATCH --time=24:0:0
+#SBATCH --time=8:0:0
 #SBATCH --partition=lrgmem
 #SBATCH --nodes=1
 # number of tasks (processes) per node
@@ -25,7 +25,7 @@ done
 oneKG_vcf_frq=$RAREVARDIR/reference/AFR_1KG_chrALL_af.frq
 head -n1 $RAREVARDIR/download/1KG/AFR_1KG_chr1_af.frq > $oneKG_vcf_frq
 for j in {1..22}; do
-tail n+2 $RAREVARDIR/download/1KG/AFR_1KG_chr${j}_afr.frq >> $oneKG_vcf_frq
+tail n+2 $RAREVARDIR/download/1KG/AFR_1KG_chr${j}_af.frq >> $oneKG_vcf_frq
 done
 
 # make gtex frequency file
