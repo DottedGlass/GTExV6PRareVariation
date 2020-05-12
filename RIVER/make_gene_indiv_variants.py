@@ -8,6 +8,12 @@ Col1 is restricted to genes that have at least one multi-tissue outlier
 Col2 is all individuals that have at least one rare variant within 10kb TSS
     of the gene in that row
 Col3 has each variant of the form $chrom:$position:$major_allele:$variant_allele
+
+Example usage:
+python make_gene_indiv_variants.py data/v8/outliers_medz_picked.txt \
+download/gtex8/GTEx_AFA_10kb_TSS.vcf.gz
+reference/v8.genes.TSS_minus10k.bed
+reference/GTEx_AFA_10kb_TSS_AF_rare.frq
 """
 
 import os
@@ -15,31 +21,22 @@ import argparse
 import pandas as pd
 import allel
 
-print('hard coded files')
+# parse arguments from command line
+parser = argparse.ArgumentParser(description='Make file with outlier gene and individual pairs with list of rare variants')
+parser.add_argument('outliers', type=str, help='Input dir for multi-tissue outliers file')
+parser.add_argument('vcf', type=str, help='Input dir for vcf file')
+parser.add_argument('TSS', type=str, help='Input dir for BED file with 10kb TSS of genes')
+parser.add_argument('rare_var', type=str, help='Input dir for allele frequency file with only rare variants')
+parser.add_argument('outfile', type=str, help='output file')
+args = parser.parse_args()
+
 dir = os.environ["RAREVARDIR"] + '/' # upper-level directory
-outliers_file = dir + 'data/v8/outliers_medz_picked.txt'
-vcf_file = dir + 'download/gtex8/GTEx_AFA_10kb_TSS.vcf.gz'
-TSS_file = dir + 'reference/v8.genes.TSS_minus10k.bed'
-rare_var_file = dir + 'reference/GTEx_AFA_10kb_TSS_AF_rare.frq'
 
-# if __name__ == '__main__':
-
-# # parse arguments from command line
-# parser = argparse.ArgumentParser(description='Make file with outlier gene and individual pairs with list of rare variants')
-# parser.add_argument('outliers', type=str, help='Input dir for multi-tissue outliers file')
-# parser.add_argument('vcf', type=str, help='Input dir for vcf file')
-# parser.add_argument('TSS', type=str, help='Input dir for BED file with 10kb TSS of genes')
-# parser.add_argument('rare_var', type=str, help='Input dir for allele frequency file with only rare variants')
-# parser.add_argument('outfile', type=str, help='output file')
-# args = parser.parse_args()
-#
-# dir = os.environ["RAREVARDIR"] + '/' # upper-level directory
-#
-# outliers_file = dir + args.outliers     # data/v8/outliers_medz_picked.txt
-# vcf_file = dir + args.vcf               # download/gtex8/GTEx_AFA_10kb_TSS.vcf
-# TSS_file = dir + args.TSS               # reference/v8.genes.TSS_minus10k.bed
-# rare_var_file = dir + args.rare_var     # reference/GTEx_AFA_10kb_TSS_AF_rare.frq
-# outfile = dir + args.outfile
+outliers_file = dir + args.outliers     # data/v8/outliers_medz_picked.txt
+vcf_file = dir + args.vcf               # download/gtex8/GTEx_AFA_10kb_TSS.vcf
+TSS_file = dir + args.TSS               # reference/v8.genes.TSS_minus10k.bed
+rare_var_file = dir + args.rare_var     # reference/GTEx_AFA_10kb_TSS_AF_rare.frq
+outfile = dir + args.outfile
 
 # read in files
 print('reading input files')
