@@ -42,6 +42,7 @@ if __name__ == '__main__':
     outfile = dir + args.outfile
 
     # read in files
+    print('reading input files')
     outliers = pd.read_csv(outliers_file, sep='\t')
     outliers.columns = map(str.lower, outliers.columns)
 
@@ -50,7 +51,7 @@ if __name__ == '__main__':
     TSS = pd.read_csv(TSS_file, sep='\t', names=['chrom', 'start', 'stop', 'gene'])
 
     rare_var = pd.read_csv(rare_var_file, sep='\t', skiprows=1, names=['chrom', 'pos', 'n_alleles', 'n_chr', 'ref', 'alt'])
-    rare_var_chrom_pos = rare_var['chrom'] + ':' + rare_var['pos'].astype(str)
+    rare_var_chrom_pos = '$' + rare_var['chrom'] + ':$' + rare_var['pos'].astype(str)
     rare_var.insert(rare_var.shape[1],'chrom:pos', rare_var_chrom_pos)
     rare_var.drop_duplicates('chrom:pos',inplace=True) # remove duplicates
 
@@ -59,6 +60,7 @@ if __name__ == '__main__':
 
     # filter rare_var for variants that are within a 10kb TSS window of outlier gene
     # note that TSS has 0-based indexing whereas rare_var has 1-based indexing
+    print('filtering for rare variants within 10kb of TSS of outlier genes')
     gene_dict = dict()      # dictionary with key=index, value=gene
     rare_var['pos0'] = rare_var['pos'] - 1   #get 0-based indexing of rare_var
     chr_list = list(TSS.drop_duplicates('chrom')['chrom'])
@@ -88,7 +90,7 @@ if __name__ == '__main__':
     # build dataframe from vcf file with columns
     # chrom pos ref alt chrom:pos
     vcf_df = pd.DataFrame({'chrom':vcf['variants/CHROM'], 'pos':vcf['variants/POS'], 'ref':vcf['variants/REF'], 'alt':vcf['variants/ALT']})
-    vcf_df_chrom_pos = vcf_df['chrom'] + ':' + vcf_df['pos'].astype(str)
+    vcf_df_chrom_pos = '$' + vcf_df['chrom'] + ':$' + vcf_df['pos'].astype(str)
     vcf_df.insert(vcf_df.shape[1], 'chrom:pos', vcf_df_chrom_pos)
     dup_index = vcf_df.drop_duplicates('chrom:pos').index # remove duplicates
     vcf_df = vcf_df.loc[dup_index,:]
@@ -96,16 +98,68 @@ if __name__ == '__main__':
     # get genotype data from vcf file
     genotype = vcf['calldata/GT']
 
+    # get list of samples from vcf file
+    samples = vcf['samples']
 
-    # for each rare variant, find individuals that have the rare variant
-    col1 = []
-    col2 = []
-    col3 = []
-
+    # filter vcf_df and rare_var so that both contain the same chrom:pos
     # find matching chrom and pos in rare_var and vcf_df
+    print('find matching chr and positions in rare variants list and the vcf file')
     rare_var = rare_var[rare_var['chrom:pos'].isin(vcf_df['chrom:pos'])]
     vcf_df = vcf_df[vcf_df['chrom:pos'].isin(rare_var['chrom:pos'])]
 
-    
+    # add column for the gene associated with the variant in vcf_df
+    vcf_df.insert(0, 'gene', rare_var['gene'].values)
 
-    # $chrom:$position:$major_allele:$variant_allele
+    # for each rare variant, find individuals that have the rare variant
+    # key=gene:indiv, value= list of $chrom:$position:$major_allele:$variant_allele
+    print('finding variants for gene-individual pairs')
+    gene_indiv_var = dict()
+
+    for i,index in enumerate(vcf_df.index):
+        # determine major or minor allele from rare_var based on allele frequency
+        ref = rare_var.iloc[i]['ref'].split(':')
+        ref[1] = float(ref[1])
+        alt = rare_var.iloc[i]['alt'].split(':')
+        alt[1] = float(alt[1])
+
+        if ref[1] > alt[1]:
+            major = ref; minor = alt
+            rare_allele = 1
+        else:
+            major = alt; minor = ref
+            rare_allele = 0
+
+        # check which samples have the rare allele
+        for j,sample_gt in enumerate(genotype[index]):
+            if rare_allele in sample_gt:
+                gene = vcf_df.loc[index]['gene']
+                indiv = samples[j]
+
+                k = gene + ':' + indiv
+                if k not in gene_indiv_var:
+                    gene_indiv_var[k] = []
+
+                var_list = gene_indiv_var[k]
+                # $chrom:$position:$major_allele:$variant_allele
+                chrom = vcf_df.loc[index]['chrom']
+                position = str(vcf_df.loc[index]['pos'])
+                major_allele = major[0]
+                variant_allele = minor[0]
+                var_list.append('$' + chrom + ':$' + position + ':$' + major_allele + ':$' + variant_allele)
+                gene_indiv_var[k] = var_list
+
+    # write to file
+    gene_indiv_list = list(gene_indiv_var.keys())
+    gene_indiv_list.sort()
+
+    with open(outfile,'w') as f:
+        # header
+        f.write('gene\tindividual\tvariants\n')
+
+        for gene_indiv in gene_indiv_list:
+            gene, indiv = gene_indiv.split(':')
+            var_list = gene_indiv_var[gene_indiv]
+            variants = ','.join(var_list)
+            f.write(gene + '\t' + indiv + '\t' + variants + '\n')
+
+    print("saved to", outfile)
