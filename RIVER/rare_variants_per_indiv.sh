@@ -25,7 +25,7 @@ done
 oneKG_vcf_frq=$RAREVARDIR/reference/AFR_1KG_chrALL_af.frq
 head -n1 $RAREVARDIR/download/1KG/AFR_1KG_chr1_af.frq > $oneKG_vcf_frq
 for j in {1..22}; do
-tail n+2 $RAREVARDIR/download/1KG/AFR_1KG_chr${j}_af.frq >> $oneKG_vcf_frq
+tail -n +2 $RAREVARDIR/download/1KG/AFR_1KG_chr${j}_af.frq >> $oneKG_vcf_frq
 done
 
 # make gtex frequency file
