@@ -17,16 +17,16 @@ ls $gtex_code
 gtex_vcf=/scratch/groups/abattle4/jessica/ATG/Final/pseudofun/GTEx_v8_WGS_ARA.recode_SNP.vcf.gz
 afr_1kg=/scratch/groups/abattle4/jessica/ATG/Final/1KG_AFR_biallelic
 
-# make 1KG frequency file
-for j in {1..22};do
-vcftools --gzvcf ${afr_1kg}/AFR_1KG_chr${j}.vcf.gz --freq --out $RAREVARDIR/download/1KG/AFR_1KG_chr${j}_af
-done
-
-oneKG_vcf_frq=$RAREVARDIR/reference/AFR_1KG_chrALL_af.frq
-head -n1 $RAREVARDIR/download/1KG/AFR_1KG_chr1_af.frq > $oneKG_vcf_frq
-for j in {1..22}; do
-tail -n +2 $RAREVARDIR/download/1KG/AFR_1KG_chr${j}_af.frq >> $oneKG_vcf_frq
-done
+# # make 1KG frequency file
+# for j in {1..22};do
+# vcftools --gzvcf ${afr_1kg}/AFR_1KG_chr${j}.vcf.gz --freq --out $RAREVARDIR/download/1KG/AFR_1KG_chr${j}_af
+# done
+#
+# oneKG_vcf_frq=$RAREVARDIR/reference/AFR_1KG_chrALL_af.frq
+# head -n1 $RAREVARDIR/download/1KG/AFR_1KG_chr1_af.frq > $oneKG_vcf_frq
+# for j in {1..22}; do
+# tail -n +2 $RAREVARDIR/download/1KG/AFR_1KG_chr${j}_af.frq >> $oneKG_vcf_frq
+# done
 
 # make gtex frequency file
 gtex_vcf_frq=$RAREVARDIR/reference/GTEx_AFA_AF.frq
