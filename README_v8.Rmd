@@ -1,0 +1,160 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+## Setup
+Add the following to .bashrc
+```
+export RAREVARDIR=<path to root of folder that contains our data>
+```
+
+Make assumed directories
+```
+mkdir ${RAREVARDIR}/logs
+mkdir ${RAREVARDIR}/preprocessing
+mkdir ${RAREVARDIR}/preprocessing/PEER
+mkdir ${RAREVARDIR}/reference
+mkdir ${RAREVARDIR}/data
+mkdir ${RAREVARDIR}/data/medz
+mkdir ${RAREVARDIR}/data/singlez
+<!-- mkdir ${RAREVARDIR}/data/metasoft -->
+<!-- mkdir ${RAREVARDIR}/features -->
+<!-- mkdir ${RAREVARDIR}/features/annotations -->
+<!-- mkdir ${RAREVARDIR}/features/annotations/ACMG -->
+<!-- mkdir ${RAREVARDIR}/features/annotations/ClinVar -->
+<!-- mkdir ${RAREVARDIR}/features/annotations/GWAS -->
+<!-- mkdir ${RAREVARDIR}/features/annotations/OMIM -->
+<!-- mkdir ${RAREVARDIR}/features/annotations/Orphanet -->
+<!-- mkdir ${RAREVARDIR}/features/annotations/Other -->
+<!-- mkdir ${RAREVARDIR}/RIVER -->
+<!-- mkdir ${RAREVARDIR}/RIVER/code -->
+<!-- mkdir ${RAREVARDIR}/RIVER/code/mfiles -->
+<!-- mkdir ${RAREVARDIR}/RIVER/data -->
+<!-- mkdir ${RAREVARDIR}/RIVER/data/expression -->
+<!-- mkdir ${RAREVARDIR}/RIVER/data/score -->
+<!-- mkdir ${RAREVARDIR}/RIVER/data/score/indiv -->
+<!-- mkdir ${RAREVARDIR}/RIVER/data/score/feature -->
+<!-- mkdir ${RAREVARDIR}/RIVER/data/rvsite -->
+mkdir ${RAREVARDIR}/data/wgs
+mkdir ${RAREVARDIR}/data/wgs/1KG 
+```
+
+## Download required files
+Download from http://www.gtexportal.org/home/datasets: <br>
+* gencode.v26.GRCh38.genes.gtf.gz
+* `GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_reads.gct` (gunzip it)
+* `GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_tpm.gct` (gunzip it)
+* `GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_median_tpm.gct` (gunzip it)
+* `GTEx_Analysis_v8_eQTL_covariates.tar.gz` (covariates used during eQTL discovery)
+* `GTEx_Analysis_v8_eQTL.tar` (eGene and significant variant-gene associations based on permutations for each tissue)
+```{bash download_gtex_v8, eval=FALSE, cache=TRUE} 
+
+
+# print head of each file
+```
+
+
+Download from Gencode the v26 annotations (ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_26/). These gene annotations will be used to select for protein coding and lincRNA coding genes.
+* `gencode.v26.annotation.gtf` (gunzip it)
+```{bash gencode, eval=FALSE, cache=TRUE} 
+
+
+# print head of each file
+```
+
+
+Download from dbGaP: <br>
+(It is possible some of the file names may be different in the final release.)
+* `GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz` (WGS for v8 individuals)
+<!-- * ASE files -->
+* `GTEx_Analysis_2017-06-05_v8_Annotations_SampleAttributesDS.txt` (information on tissue samples)
+* `GTEx_Analysis_2015-01-12_Annotations_SubjectPhenotypesDS.txt` (subject annotations, such as reported ethnicity)
+
+Download from 1KG: <br>
+1000 Genomes whole genome sequencing data is used to compute allele frequencies on the population of interest. There is code later on that can be used to download the vcf files for all autosomes in release 20181203.
+* `http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20181203_biallelic_SNV/`
+```{bash download_1KG, eval=FALSE, cache=TRUE}
+Use ./afr_freq.sh
+
+skg=${RAREVARDIR}/data/wgs/1KG
+
+loop on j = chromosome #
+wget -P ${skg}/ http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20181203_biallelic_SNV/ALL.chr${j}.shapeit2_integrated_v1a.GRCh38.20181129.phased.vcf.gz
+wget -P ${skg}/ http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20181203_biallelic_SNV/ALL.chr${j}.shapeit2_integrated_v1a.GRCh38.20181129.phased.vcf.gz.tbi
+```
+Get list of African samples from 1KG (Jessica)
+```{bash download_1KG_AFR_list, eval=FALSE, cache=TRUE}
+
+```
+
+<!-- Download from http://krishna.gs.washington.edu/download/CADD/v1.2/: -->
+<!-- * `whole_genome_SNVs.tsv.gz` -->
+<!-- * `whole_genome_SNVs.tsv.gz.tbi` -->
+<!-- * `whole_genome_SNVs_inclAnno.tsv.gz` -->
+<!-- * `whole_genome_SNVs_inclAnno.tsv.gz.tbi` -->
+
+<!-- Download from ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/: -->
+<!-- * `ALL.chr*.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz` -->
+
+<!-- Download from http://compbio.mit.edu/encode-motifs/: -->
+<!-- * `matches.txt.gz` -->
+
+<!-- Download Epigenomics Roadmap files from http://www.broadinstitute.org/~meuleman/reg2map/HoneyBadger2_release/DNase/p2/: -->
+<!-- * `prom/BED_files_per_sample/regions_prom_E*.bed` -->
+<!-- * `enh/BED_files_per_sample/regions_enh_E*.bed` -->
+<!-- * `dyadic/BED_files_per_sample/regions_dyadic_E*.bed` -->
+
+<!-- Download ExAC constraint data from ftp://ftp.broadinstitute.org/pub/ExAC_release/release0.3/functional_gene_constraint/: -->
+<!-- * `forweb_cleaned_exac_r03_march16_z_data_pLI.txt` -->
+
+<!-- Download RNA-Seq data for K562 cell lines from ENCODE at https://www.encodeproject.org/search/?type=Experiment&biosample_term_name=K562&assay_title=RNA-seq -->
+<!-- * `ENCFF104VTJ_CSHL_1.tsv` -->
+<!-- * `ENCFF201HGA_CSHL_2.tsv` -->
+<!-- * `ENCFF387ZRA_Caltech_1.tsv` -->
+<!-- * `ENCFF870QAL_Caltech_2.tsv` -->
+<!-- * `ENCFF553DDU_UConn_1.tsv` -->
+<!-- * `ENCFF811VBA_UConn_2.tsv` -->
+<!-- * `gencode.v24.tRNAs.gtf.gz` -->
+
+<!-- Download the hg19 human reference genome in FASTA format from http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/chromFa.tar.gz. Combine FASTA files for each chromosome into a single reference FASTA. -->
+
+<!-- Download VCFs from the UK10K dataset for two studies -->
+<!-- * ALSPAC VCF: https://www.google.com/url?q=https://www.ebi.ac.uk/ega/datasets/EGAD00001000740&sa=D&ust=1507684754410000&usg=AFQjCNFJ8j8ESpELYWdyx6wU7jGU1w2waQ -->
+<!-- * TWINS UK VCF: https://www.google.com/url?q=https://www.ebi.ac.uk/ega/datasets/EGAD00001000741&sa=D&ust=1507684754411000&usg=AFQjCNG16PtulHOxP-G1QN5knTBs_wlFTQ -->
+
+<!-- Other files: <br> -->
+<!-- * `gtex.lumpy.gs.svscore.low_conf.vcf.gz` (Obtained directly from the Hall Lab.) -->
+
+<!-- Download annotation resources to generate genomic features for running RIVER -->
+<!-- * CADD: http://krishna.gs.washington.edu/download/CADD/v1.3/whole_genome_SNVs_inclAnno.tsv.gz and http://krishna.gs.washington.edu/download/CADD/v1.3/whole_genome_SNVs_inclAnno.tsv.gz.tbi -->
+<!-- * DANN: https://cbcl.ics.uci.edu/public_data/DANN/data/DANN_whole_genome_SNVs.tsv.bgz and https://cbcl.ics.uci.edu/public_data/DANN/data/DANN_whole_genome_SNVs.tsv.bgz.tbi -->
+<!-- * phylop: http://hgdownload.cse.ucsc.edu/goldenpath/hg19/phyloP100way/hg19.100way.phyloP100way.bw -->
+<!-- * chromHMM: http://hgdownload.soe.ucsc.edu/goldenPath/hg19/encodeDCC/wgEncodeBroadHmm/wgEncodeBroadHmmGm12878HMM.bed.gz -->
+
+
+# Pipeline
+
+## GTEx v8
+### Expression data correction and normalization
+Obtain gene expression data that is corrected and normalized from Nicole. This data was saved to `$RAREVARDIR/preprocessing/PEER_gtex8`
+
+Convert the expression data from long to wide.
+```{bash long_to_wide, eval=FALSE, cache=TRUE}
+bash preprocessing/long_to_wide_exprbytissue.sh
+```
+
+### Make list of individuals and tissues from GTEx
+Make list of all individuals from GTEx v8 that have WGS data
+```{bash }
+cat ${RAREVARDIR}/download/gtex8/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS.txt | awk -F "\t" 'NR>1{print $1}' \
+> ${RAREVARDIR}/preprocessing/gtex_v8_individuals_all_normalized_samples.txt
+```
+
+## 1KG
+
+## Use GTEx and 1KG to get rare variants
+
+
