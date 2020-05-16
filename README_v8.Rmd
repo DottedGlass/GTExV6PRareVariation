@@ -190,6 +190,7 @@ bash preprocessing/process.reference.files_v8.sh ${RAREVARDIR}/download/gtex8/ge
 ```
 
 ### Call multi-tissue outliers
+For each gene, the individual with the most extreme median Z-score taken across tissues was identified as a multi-tissue outlier for that gene provided the absolute median Z-score was at least 2
 ```{bash multi_outliers, eval=FALSE, cache=TRUE}
 Rscript call_outliers/call_outliers_medz_v8.R
 ```
@@ -214,6 +215,7 @@ File format: Tab delimited file where the first column is the GTEx individual ID
 Description: list of GTEx v8 individuals that have WGS data and are multi-tissue outliers for at least one gene.
 
 <!-- ### Call single-tissue outliers -->
+<!-- For each tissue, an individual was called a single-tissue outlier for a particular gene if that individual had the largest absolute Z-score and the absolute value was at least 2 -->
 <!-- ```{bash single_outliers, eval=FALSE, cache=TRUE} -->
 <!-- python call_outliers/call_outliers_single_tissue_v8.py -->
 <!-- ``` -->
