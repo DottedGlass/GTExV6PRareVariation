@@ -143,15 +143,81 @@ Obtain gene expression data that is corrected and normalized from Nicole. This d
 
 Convert the expression data from long to wide.
 ```{bash long_to_wide, eval=FALSE, cache=TRUE}
-bash preprocessing/long_to_wide_exprbytissue.sh
+infolder=$RAREVARDIR/preprocessing/PEER_gtex8
+outfolder=$RAREVARDIR/preprocessing/PEER_gtex8_wide
+for file in $(ls ${infolder}/*globalOutliers.v8ciseqtls.removed.outlierGenes.zscores.txt); do
+base=$(basename $file)
+echo ${file}
+Rscript --vanilla preprocessing/long_to_wide_exprbytissue.R ${file} ${outfolder}/${base}
+done
 ```
 
-### Make list of individuals and tissues from GTEx
-Make list of all individuals from GTEx v8 that have WGS data
-```{bash }
+### Make list of individuals
+Make list of all individuals from GTEx v8. Make list of all individuals with reported African American ancestry.
+```{bash gtex_individuals, eval=FALSE, cache=TRUE}
+# list of all individuals from GTEx v8 (some do not have WGS data)
 cat ${RAREVARDIR}/download/gtex8/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS.txt | awk -F "\t" 'NR>1{print $1}' \
-> ${RAREVARDIR}/preprocessing/gtex_v8_individuals_all_normalized_samples.txt
+> ${RAREVARDIR}/reference/gtex_v8_individuals_all_normalized_samples.txt
+
+# list of all individuals from GTEx v8 with WGS data
+vcf-query -l ${RAREVARDIR}/download/gtex8/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz \
+> ${RAREVARDIR}/reference/gtex_v8_wgs_individuals.txt
+
+# list of all African American individuals from GTEx v8 (some do not have WGS data)
+cat ${RAREVARDIR}/download/gtex8/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS.txt | awk -F '\t' '{if ($5 == 2) print $1;}' \
+> ${RAREVARDIR}/reference/gtex_v8_individuals_AFA.txt
+
+# list of all African American individuals from GTEx v8 with WGS data
+awk 'NR==FNR { lines[$0]=1; next } $0 in lines' ${RAREVARDIR}/reference/gtex_v8_wgs_individuals.txt ${RAREVARDIR}/reference/gtex_v8_individuals_AFA.txt > ${RAREVARDIR}/reference/gtex_v8_wgs_individuals_AFA.txt
 ```
+
+### Make list of tissues (based on Nicole's data)
+```{bash , eval=FALSE, cache=TRUE}
+ls ${RAREVARDIR}/preprocessing/PEER_gtex8 | cut -d. -f1 \
+> ${RAREVARDIR}/reference/gtex_v8_tissues_all_normalized_samples.txt
+```
+
+### Make flat files from normalized data
+```{bash, eval=FALSE, cache=TRUE}
+python preprocessing/gather_filter_normalized_expression_v8.py
+```
+
+### Preparing gene annotations from gencode
+This list will be used to filter out genes for those that are protein coding and lincRNA coding
+**Resulting `reference/gencode.v26.genes.v8.patched_contigs_genetypes_autosomal.txt` may be empty for some reason**
+```{bash gencode_genes, eval=FALSE, cache=TRUE}
+bash preprocessing/process.reference.files_v8.sh ${RAREVARDIR}/download/gtex8/gencode.v26.GRCh38.genes.gtf.gz ${RAREVARDIR}/download/gencode/gencode.v26.annotation.gtf
+```
+
+### Call multi-tissue outliers
+```{bash multi_outliers, eval=FALSE, cache=TRUE}
+Rscript call_outliers/call_outliers_medz_v8.R
+```
+Multi-tissue outlier calling produces the following files
+#### data/outliers_medz_counts.txt
+Description: Matrix of genes by individuals representing the number of tissues used in computing the median Z-score for each (individual, gene) pair
+File format: Tab delimited file where rows are genes (ENSG IDs) and columns are individuals (GTEx individual IDs). Values represent the number of tissues for the given (individual, gene) pair used in computation of the median Z-score
+
+#### data/outliers_medz_zscores.txt
+Description: Matrix of genes by individuals holding the median Z-score for each (individual, gene) pair
+File format: Tab delimited file where rows are genes (ENSG IDs) and columns are individuals (GTEx individual IDs). Values represent the median Z-score for the given (individual, gene) pair. For (individual, gene) pairs where the number of available tissues is less than 5, NA is used to indicate the outlier test was not performed
+
+#### data/outliers_medz_picked.txt
+Description: Most extreme multi-tissue outliers for each gene with criterion |median Z-score| > 2
+File format: Tab delimited file where first column is the gene ENSG ID, second column GTEx individual ID, third column the number of tissues included in the median Z-score computation, and the fourth column the median Z-score
+
+#### data/outliers_medz_picked_counts_per_ind.txt
+Description: Number of genes where the GTEx individual is a multi-tissue outlier
+File format: Tab delimited file where the first column is the GTEx individual ID and the second column is the number of genes where that individual is a multi-tissue outlier
+
+#### preprocessing/gtex_v8_wgs_ids_outlier_filtered.txt
+Description: list of GTEx v8 individuals that have WGS data and are multi-tissue outliers for at least one gene.
+
+<!-- ### Call single-tissue outliers -->
+<!-- ```{bash single_outliers, eval=FALSE, cache=TRUE} -->
+<!-- python call_outliers/call_outliers_single_tissue_v8.py -->
+<!-- ``` -->
+
 
 ## 1KG
 
