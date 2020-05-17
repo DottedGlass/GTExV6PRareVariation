@@ -18,6 +18,8 @@ mkdir ${RAREVARDIR}/preprocessing
 mkdir ${RAREVARDIR}/preprocessing/PEER
 mkdir ${RAREVARDIR}/reference
 mkdir ${RAREVARDIR}/data
+mkdir ${RAREVARDIR}/data/GTEx
+mkdir ${RAREVARDIR}/data/1KG
 mkdir ${RAREVARDIR}/data/medz
 mkdir ${RAREVARDIR}/data/singlez
 <!-- mkdir ${RAREVARDIR}/data/metasoft -->
@@ -38,9 +40,9 @@ mkdir ${RAREVARDIR}/data/singlez
 <!-- mkdir ${RAREVARDIR}/RIVER/data/score/indiv -->
 <!-- mkdir ${RAREVARDIR}/RIVER/data/score/feature -->
 <!-- mkdir ${RAREVARDIR}/RIVER/data/rvsite -->
-mkdir ${RAREVARDIR}/data/wgs
-mkdir ${RAREVARDIR}/data/wgs/1KG 
+<!-- mkdir ${RAREVARDIR}/data/wgs -->
 ```
+
 
 ## Download required files
 Download from http://www.gtexportal.org/home/datasets: <br>
@@ -50,19 +52,43 @@ Download from http://www.gtexportal.org/home/datasets: <br>
 * `GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_median_tpm.gct` (gunzip it)
 * `GTEx_Analysis_v8_eQTL_covariates.tar.gz` (covariates used during eQTL discovery)
 * `GTEx_Analysis_v8_eQTL.tar` (eGene and significant variant-gene associations based on permutations for each tissue)
+Save these files to `${RAREVARDIR}/data`
 ```{bash download_gtex_v8, eval=FALSE, cache=TRUE} 
 
+# gencode.v26.GRCh38.genes.gtf
+wget -P ${RAREVARDIR}/data/GTEx https://storage.googleapis.com/gtex_analysis_v8/reference/gencode.v26.GRCh38.genes.gtf
+gunzip ${RAREVARDIR}/data/GTEx/gencode.v26.GRCh38.genes.gtf.gz
 
-# print head of each file
+# GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_reads.gct
+wget -P ${RAREVARDIR}/data/GTEx https://storage.googleapis.com/gtex_analysis_v8/rna_seq_data/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_reads.gct.gz
+gunzip ${RAREVARDIR}/data/GTEx/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_reads.gct.gz
+
+# GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_tpm.gct
+wget -P ${RAREVARDIR}/data/GTEx https://storage.googleapis.com/gtex_analysis_v8/rna_seq_data/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_tpm.gct.gz
+gunzip ${RAREVARDIR}/data/GTEx/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_tpm.gct.gz
+
+# GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_median_tpm.gct
+wget -P ${RAREVARDIR}/data/GTEx https://storage.googleapis.com/gtex_analysis_v8/rna_seq_data/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_median_tpm.gct.gz
+gunzip ${RAREVARDIR}/data/GTEx/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_median_tpm.gct.gz
+
+# GTEx_Analysis_v8_eQTL_covariates.tar.gz
+wget -P ${RAREVARDIR}/data/GTEx https://storage.googleapis.com/gtex_analysis_v8/single_tissue_qtl_data/GTEx_Analysis_v8_eQTL_covariates.tar.gz
+tar -xzvf ${RAREVARDIR}/data/GTEx/GTEx_Analysis_v8_eQTL_covariates.tar.gz -C ${RAREVARDIR}/data/GTEx
+
+# GTEx_Analysis_v8_eQTL.tar
+wget -P ${RAREVARDIR}/data/GTEx https://storage.googleapis.com/gtex_analysis_v8/single_tissue_qtl_data/GTEx_Analysis_v8_eQTL.tar
+tar -xvf ${RAREVARDIR}/data/GTEx/GTEx_Analysis_v8_eQTL.tar -C ${RAREVARDIR}/data/GTEx
+
 ```
 
 
 Download from Gencode the v26 annotations (ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_26/). These gene annotations will be used to select for protein coding and lincRNA coding genes.
 * `gencode.v26.annotation.gtf` (gunzip it)
 ```{bash gencode, eval=FALSE, cache=TRUE} 
+# gencode.v26.annotation.gtf
+wget -P ${RAREVARDIR}/data/GTEx ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_26/gencode.v26.annotation.gtf.gz
+gunzip ${RAREVARDIR}/data/GTEx/gencode.v26.annotation.gtf.gz
 
-
-# print head of each file
 ```
 
 
@@ -77,9 +103,9 @@ Download from 1KG: <br>
 1000 Genomes whole genome sequencing data is used to compute allele frequencies on the population of interest. There is code later on that can be used to download the vcf files for all autosomes in release 20181203.
 * `http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20181203_biallelic_SNV/`
 ```{bash download_1KG, eval=FALSE, cache=TRUE}
-Use ./afr_freq.sh
+# Use ./afr_freq.sh
 
-skg=${RAREVARDIR}/data/wgs/1KG
+skg=${RAREVARDIR}/data/1KG
 
 loop on j = chromosome #
 wget -P ${skg}/ http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20181203_biallelic_SNV/ALL.chr${j}.shapeit2_integrated_v1a.GRCh38.20181129.phased.vcf.gz
@@ -222,6 +248,29 @@ Description: list of GTEx v8 individuals that have WGS data and are multi-tissue
 
 
 ## 1KG
+
+### Subset 1KG
+Subset 1KG for African samples
+```{bash subset_1KG, eval=FALSE, cache=TRUE}
+skg=/scratch/groups/abattle4/jessica/1KG_vcf_biallelic
+gen_data_dir=/scratch/groups/abattle4/jessica/ATG/Final/data
+afr_1kg=/scratch/groups/abattle4/jessica/ATG/Final/1KG_AFR_biallelic
+
+bgzip -fdc ${skg}/ALL.chr${j}.shapeit2_integrated_v1a.GRCh38.20181129.phased.vcf.gz > ${skg}/ALL.chr${j}.shapeit2_integrated_v1a.GRCh38.20181129.phased.vcf
+sed 's/^##fileformat=VCFv4.3/##fileformat=VCFv4.2/' ${skg}/ALL.chr${j}.shapeit2_integrated_v1a.GRCh38.20181129.phased.vcf  > ${skg}/ALL.chr${j}.shapeit2_integrated_v1a.GRCh38.20181129_v42.phased.vcf
+
+vcftools --vcf ${skg}/ALL.chr${j}.shapeit2_integrated_v1a.GRCh38.20181129_v42.phased.vcf \
+  --keep ${gen_data_dir}/1kg_afr.keep \
+  --remove-indels --remove-filtered-all \
+  --max-missing-count 10 \
+  --not-chr X --recode \
+  --recode-INFO-all \
+  --stdout >  ${afr_1kg}/AFR_1KG_chr${j}.vcf
+  
+bgzip -c ${afr_1kg}/AFR_1KG_chr${j}.vcf > ${afr_1kg}/AFR_1KG_chr${j}.vcf.gz
+tabix -f ${afr_1kg}/AFR_1KG_chr${j}.vcf.gz
+```
+
 
 ## Use GTEx and 1KG to get rare variants
 
