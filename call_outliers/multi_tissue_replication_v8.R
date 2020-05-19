@@ -62,7 +62,7 @@ individs = colnames(data)[3:ncol(data)]
 tissues = unique(sort(data$Tissue))
 
 # Read in list of GENCODE genes with types
-genes.types = read.table(paste(dir, '/reference/gencode.v26.genes.v8.patched_contigs_genetypes_autosomal.txt'), sep = '\t', header = F, stringsAsFactors = F)
+genes.types = read.table(paste0(dir, '/reference/gencode.v26.genes.v8.patched_contigs_genetypes_autosomal.txt'), sep = '\t', header = F, stringsAsFactors = F)
 
 # Filter for protein_coding and lincRNA genes
 types.to.keep = c('protein_coding', 'lincRNA')
