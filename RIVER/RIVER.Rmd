@@ -1,0 +1,65 @@
+---
+title: "RIVER"
+output: html_notebook
+---
+
+Sample data
+
+```{r}
+library("RIVER")
+filename <- system.file("extdata", "simulation_RIVER.gz", 
+                       package="RIVER")
+dataInput <- getData(filename) # import experimental data
+
+Feat <- t(Biobase::exprs(dataInput)) # genomic features (G)
+Out <- as.numeric(unlist(dataInput$Outlier))-1 # outlier status (E)
+
+head(Feat)
+head(Out)
+
+evaROC <- evaRIVER(dataInput)
+cat('AUC (GAM-genomic annotation model) = ', round(evaROC$GAM_auc,3), '\n')
+cat('AUC (RIVER) = ', round(evaROC$RIVER_auc,3), '\n')
+
+par(mar=c(6.1, 6.1, 4.1, 4.1))
+plot(NULL, xlim=c(0,1), ylim=c(0,1), 
+     xlab="False positive rate", ylab="True positive rate", 
+     cex.axis=1.3, cex.lab=1.6)
+abline(0, 1, col="gray")
+lines(1-evaROC$RIVER_spec, evaROC$RIVER_sens, 
+      type="s", col='dodgerblue', lwd=2)
+lines(1-evaROC$GAM_spec, evaROC$GAM_sens, 
+      type="s", col='mediumpurple', lwd=2)
+legend(0.7,0.2,c("RIVER","GAM"), lty=c(1,1), lwd=c(2,2),
+       col=c("dodgerblue","mediumpurple"), cex=1.2, 
+       pt.cex=1.2, bty="n")
+title(main=paste("AUC: RIVER = ", round(evaROC$RIVER_auc,3), 
+                 ", GAM = ", round(evaROC$GAM_auc,3), 
+                 ", P = ", format.pval(evaROC$pvalue, digits=2, 
+                                       eps=0.001),sep=""))
+```
+
+European data
+Format to remove unwanted columns and add in z-scores
+```{r}
+require(dplyr)
+require(tidyr)
+
+euro_df <- read.table('/work-zfs/abattle4/bstrober/rare_variant/gtex_v8/splicing/unsupervised_modeling/unsupervised_learning_input/fully_observed_merged_outliers_0.01_genes_intersection_between_te_ase_splicing_features_filter_no_tissue_anno_N2_pairs_3.txt', header=TRUE)
+
+z_scores <- read.table('/scratch/groups/abattle4/victor/GTExV6PRareVariationData/archive/data/v8/outliers_medz_zscores.txt', header=TRUE, check.names = FALSE)
+
+newdf <- z_scores %>% gather(key="SubjectID",value="Zscore",-GENE) %>% rename(GeneName=GENE)
+newdf <- as.data.table(newdf)
+setkey(newdf,GeneName,SubjectID)
+# setkey(newdf,GeneName,SubjectID)
+key(newdf)
+# select(-distTSS,-distTES, -contains("pvalue"))
+```
+
+```{r}
+datInput <- getData('/work-zfs/abattle4/bstrober/rare_variant/gtex_v8/splicing/unsupervised_modeling/unsupervised_learning_input/fully_observed_merged_outliers_0.01_genes_intersection_between_te_ase_splicing_features_filter_no_tissue_anno_N2_pai')
+evaROC <- evaRIVER(dataInput)evaROC <- evaRIVER(dataInput)
+
+```
+
