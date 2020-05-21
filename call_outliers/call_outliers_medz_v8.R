@@ -12,6 +12,7 @@ doMC::registerDoMC(cores=12)
 
 ### Master directory
 dir = Sys.getenv('RAREVARDIR')
+dir = paste0(dir,'/archive/')
 
 ############ FUNCTIONS
 
@@ -68,7 +69,7 @@ data = data[data$Gene %in% genes_types[, 1], ]
 results = ddply(data, .(Gene), meta.analysis, .parallel = TRUE)
 
 ## For samples with < n tissues, set test statistics to NA
-tissue_threshold = 5
+tissue_threshold = 1
 indexer = results$n.tissues < tissue_threshold
 results[indexer, 4:ncol(results)] = NA
 
@@ -87,11 +88,11 @@ genes = rownames(medz)
 
 ## Write out unmelted summary matrices
 header = matrix(c('GENE', colnames(counts)), nrow = 1)
-write.table(header, paste0(dir, '/data/v8/outliers_medz_counts.txt'), sep = '\t', col.names = F, row.names = F, quote = F)
-write.table(header, paste0(dir, '/data/v8/outliers_medz_zscores.txt'), sep = '\t', col.names = F, row.names = F, quote = F)
+write.table(header, paste0(dir, '/data/v8/RIVER_lookup/outliers_medz_counts.txt'), sep = '\t', col.names = F, row.names = F, quote = F)
+write.table(header, paste0(dir, '/data/v8/RIVER_lookup/outliers_medz_zscores.txt'), sep = '\t', col.names = F, row.names = F, quote = F)
 
-write.table(counts, paste0(dir, '/data/v8/outliers_medz_counts.txt'), sep = '\t', col.names = F, row.names = T, quote = F, append = T)
-write.table(medz, paste0(dir, '/data/v8/outliers_medz_zscores.txt'), sep = '\t', col.names = F, row.names = T, quote = F, append = T)
+write.table(counts, paste0(dir, '/data/v8/RIVER_lookup/outliers_medz_counts.txt'), sep = '\t', col.names = F, row.names = T, quote = F, append = T)
+write.table(medz, paste0(dir, '/data/v8/RIVER_lookup/outliers_medz_zscores.txt'), sep = '\t', col.names = F, row.names = T, quote = F, append = T)
 
 ## Pick outliers using median Z-score >= 2
 ## Remove individuals with >= 50 outliers
@@ -110,12 +111,12 @@ medz_picked_thresh = medz_picked_thresh[order(-abs(medz_picked_thresh$Z)), ]
 medz_ind_counts = table(medz_picked_thresh$INDS)
 medz_ind_picked = names(medz_ind_counts)[medz_ind_counts < medz_ind_filt]
 medz_picked_thresh = medz_picked_thresh[medz_picked_thresh$INDS %in% medz_ind_picked, ]
-write.table(medz_picked_thresh, paste0(dir, '/data/v8/outliers_medz_picked.txt'), col.names = T, row.names = F, quote = F, sep = '\t')
-write.table(medz_ind_counts, paste0(dir, '/data/v8/outliers_medz_picked_counts_per_ind.txt'), col.names = F, row.names = F, quote = F, sep = '\t')
+write.table(medz_picked_thresh, paste0(dir, '/data/v8/RIVER_lookup/outliers_medz_picked.txt'), col.names = T, row.names = F, quote = F, sep = '\t')
+write.table(medz_ind_counts, paste0(dir, '/data/v8/RIVER_lookup/outliers_medz_picked_counts_per_ind.txt'), col.names = F, row.names = F, quote = F, sep = '\t')
 # clean up the unthresholded set
 medz_picked = medz_picked[medz_picked$INDS %in% medz_ind_picked, ]
 medz_picked = medz_picked[order(-abs(medz_picked$Z)), ]
-write.table(medz_picked, paste0(dir, '/data/v8/outliers_medz_nothreshold_picked.txt'), col.names = T, row.names = F, quote = F, sep = '\t')
+write.table(medz_picked, paste0(dir, '/data/v8/RIVER_lookup/outliers_medz_nothreshold_picked.txt'), col.names = T, row.names = F, quote = F, sep = '\t')
 
 ## Filter WGS individual lists for individuals that pass the number of outlier filters
 wgs.feat.inds = read.table(paste0(dir,'/preprocessing/gtex_v8_wgs_individuals.txt'), sep = '\t', header = F, stringsAsFactors = F)[, 1]
@@ -124,5 +125,5 @@ wgs.feat.inds = read.table(paste0(dir,'/preprocessing/gtex_v8_wgs_individuals.tx
 wgs.feat.inds = wgs.feat.inds[wgs.feat.inds %in% medz_ind_picked]
 # wgs.count.inds = wgs.count.inds[wgs.count.inds %in% medz_ind_picked]
 
-write.table(wgs.feat.inds, paste0(dir, '/preprocessing/gtex_v8_wgs_ids_outlier_filtered.txt'), quote = F, sep = '\t', col.names = F, row.names = F)
+# write.table(wgs.feat.inds, paste0(dir, '/preprocessing/gtex_v8_wgs_ids_outlier_filtered.txt'), quote = F, sep = '\t', col.names = F, row.names = F)
 # write.table(wgs.count.inds, paste0(dir, '/preprocessing/gtex_v8_wgs_ids_HallLabSV_outlier_filtered.txt'), quote = F, sep = '\t', col.names = F, row.names = F)
