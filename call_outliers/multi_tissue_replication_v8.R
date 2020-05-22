@@ -152,4 +152,4 @@ replication.back$Type = factor(rep(rep.types[2], nrow(replication.back)), levels
 replication = rbind(replication.real, replication.back)
 
 # Save workspace image
-save(replication, replication.thresholds, file = paste0(dir, '/data/figure1c.replication.rate.consistent.RData'))
+save(replication, replication.thresholds, file = paste0(dir, '/data/figure1c.replication.rate.consistent_v8.RData'))
