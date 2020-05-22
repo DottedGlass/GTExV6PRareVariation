@@ -2,7 +2,7 @@
 
 dir=$RAREVARDIR
 
-cat ${dir}/data/outliers_medz_picked.txt | awk '$3==5' > possible.txt
+cat ${dir}/archive/data/outliers_medz_picked.txt | awk '$3==5' > possible.txt
 
 # subset the normalized expression file to these example genes
 expr=${dir}/preprocessing/gtex_2015-01-12_normalized_expression.txt
