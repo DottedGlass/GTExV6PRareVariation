@@ -43,6 +43,11 @@ gene.medz.df = data.frame(Tissue = "Median", Gene = "ENSG00000198610.6", variabl
 plot.data = rbind(plot.data, gene.medz.df)
 plot.data$Tissue = factor(plot.data$Tissue, levels = c("Adipose_Subcutaneous","Liver","Stomach","Whole_Blood","Lung","Median"))
 
+
+tissue.labs <- gsub("_","\n",c("Adipose_Subcutaneous","Liver","Stomach","Whole_Blood","Lung","Median"))
+names(tissue.labs) <- c("Adipose_Subcutaneous","Liver","Stomach","Whole_Blood","Lung","Median")
+
+
 cols = c("#FF6600","#AABB66","#99FF00","#FFDD99","#FF00BB")
 names(cols) = indtissues
 
@@ -50,12 +55,12 @@ pdf(paste0(dir, '/paper_figures/figure1a.cartoon.draft.pdf'), height = 7, width 
 
 ggplot(plot.data, aes(x = value)) +
     geom_histogram(binwidth = 0.15, colour = "white", fill = "darkgrey") + xlab('Z-score') + ylab('') +
-    facet_grid(Tissue~., scales = "free") + theme_classic() + guides(fill = FALSE) + xlim(c(-5,5)) +
+    facet_grid(Tissue~., scales = "free",labeller=labeller(Tissue=tissue.labs)) + theme_classic() + guides(fill = FALSE) + xlim(c(-5,5)) +
     # geom_vline(xintercept = c(-0.9624364,-0.3787555,4.6037353,3.2303840,3.8570197), size = 1.1) +
     scale_fill_manual(values = cols) +
-    theme(axis.ticks.y = element_blank(),
-          axis.text.y = element_blank(),
-          strip.text = element_blank(),
+    theme(axis.ticks.y = element_text(size = 12),
+          axis.text.y = element_text(size = 12),
+          #strip.text = element_blank(),
           strip.background = element_blank(),
           axis.text.x = element_text(size = 12),
           axis.title.x = element_text(size = 13))
