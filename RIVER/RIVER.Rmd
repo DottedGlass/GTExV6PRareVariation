@@ -40,13 +40,23 @@ title(main=paste("AUC: RIVER = ", round(evaROC$RIVER_auc,3),
 ```
 
 
-Prepare European data
+# Load libraries and file names
 ```{r}
 require(RIVER)
 require(dplyr)
 require(tidyr)
 require(data.table)
 
+# file names
+euro_data_all <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_input_v8_european_all_05-21-2020.txt"
+euro_data_common <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_input_v8_european_common_05-21-2020.txt"
+afr_data_all <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_input_v8_african_all_05-21-2020.txt"
+afr_data_common <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_input_v8_african_common_05-21-2020.txt"
+
+```
+
+# Prepare European data
+```{r}
 # european data
 euro_df <- read.table('/work-zfs/abattle4/bstrober/rare_variant/gtex_v8/splicing/unsupervised_modeling/unsupervised_learning_input/fully_observed_merged_outliers_0.01_genes_intersection_between_te_ase_splicing_features_filter_no_tissue_anno_N2_pairs_3.txt', header=TRUE)
 
@@ -55,35 +65,30 @@ euro_df <- euro_df %>% rename(SubjectID = SubjectID, GeneName = GeneName, GC = g
 
 
 ## get z-scores
-euro_df <- euro_df %>% mutate(lowertail=total_expression_pvalue<0)
-
-euro_df$Zscore = NA
-euro_df$Zscore[euro_df$lowertail] = qnorm(abs(euro_df$total_expression_pvalue[euro_df$lowertail]) ,lower.tail=TRUE)
-euro_df$Zscore[!euro_df$lowertail] = qnorm(abs(euro_df$total_expression_pvalue[!euro_df$lowertail]) ,lower.tail=FALSE)
+euro_df <- euro_df %>% mutate(Zscore = qnorm(abs(total_expression_pvalue)/2)*sign(total_expression_pvalue))
 
 ## format columns
-euro_df <- select(euro_df,-contains("pvalue"),-lowertail) # drop columns containing "pvalue"
+euro_df <- select(euro_df,-contains("pvalue")) # drop columns containing "pvalue"
 euro_df <- euro_df %>% select(-N2pair,N2pair) # move N2pair column to last column
 
 ## save version that keeps all features
-euro_data_all <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_input_v8_european_all_05-21-2020.txt"
 write.table(x = euro_df, row.names = FALSE, quote = FALSE, file = euro_data_all)
 
 ## keep features that are common between european and african data
 euro_df <- euro_df %>% select(SubjectID, GeneName, GC, CpG, bStatistic, priPhCons, mamPhCons, verPhCons, priPhyloP, mamPhyloP, verPhyloP, GerpN, GerpS, PHRED, SIFTcat_deleterious, SIFTcat_tolerated, SIFTval, PolyPhenCat_benign, PolyPhenCat_possibly_damaging, PolyPhenCat_probably_damaging, PolyPhenCat_unknown, PolyPhenVal, dist_to_tss, Zscore,  N2pair)
 
 ## save version with common features
-euro_data_common <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_input_v8_european_all_05-21-2020.txt"
 write.table(x = euro_df, row.names = FALSE, quote = FALSE, file = euro_data_common)
 ```
 
-Prepare African data
+# Prepare African data
 ```{r}
 # african data
 afr_df <- read.table('/work-zfs/abattle4/bstrober/random_projects/feature_generation_for_victor_and_jessica/river_input_gene_level.txt', header=TRUE)
 
 ## get zscores
 z_scores <- read.table('/scratch/groups/abattle4/victor/GTExV6PRareVariationData/archive/data/v8/outliers_medz_zscores.txt', header=TRUE, check.names = FALSE)
+
 zscore_table <- z_scores %>% gather(key="SubjectID",value="Zscore",-GENE) %>% rename(GeneName=GENE)
 zscore_table <- as.data.table(zscore_table)
 setkey(zscore_table,GeneName,SubjectID)
@@ -95,17 +100,29 @@ for (i in seq(nrow(afr_df))) {
   zscore_list[i] <- zscore_table[.(gene,subject)]$Zscore
 }
 
-zscore_list_euro <- vector("numeric",nrow(euro_df))
-for (i in seq(nrow(euro_df))) {
-  subject <- as.character(euro_df[i,1])
-  gene <- as.character(euro_df[i,2])
-  zscore_list_euro[i] <- zscore_table[.(gene,subject)]$Zscore
-}
+
+# add zscores to afr_df
+afr_df$Zscore <- zscore_list
+
+## format columns
+afr_df <- afr_df %>% select(-N2pair,N2pair) # move N2pair column to last column
+
+# drop rows with NA in zscores
+afr_df <- afr_df[complete.cases(zscore_list), ]
+
+# save version that keeps all features
+write.table(x = afr_df, row.names = FALSE, quote = FALSE, file = afr_data_all)
+
+# keep features that are common between european and african data
+afr_df <- afr_df %>% select(SubjectID, GeneName, GC, CpG, bStatistic, priPhCons, mamPhCons, verPhCons, priPhyloP, mamPhyloP, verPhyloP, GerpN, GerpS, PHRED, SIFTcat_deleterious, SIFTcat_tolerated, SIFTval, PolyPhenCat_benign, PolyPhenCat_possibly_damaging, PolyPhenCat_probably_damaging, PolyPhenCat_unknown, PolyPhenVal, dist_to_tss, Zscore,  N2pair)
+
+# save version with common features
+write.table(x = afr_df, row.names = FALSE, quote = FALSE, file = afr_data_common)
 
 ```
 
 
-# Run River on European data with all features 
+# Evaluate RIVER on European data with all features 
 ```{r}
 dataInput_euro_all <- getData(euro_data_all)
 evaROC_euro_all <- evaRIVER(dataInput_euro_all)
@@ -124,24 +141,27 @@ lines(1-evaROC_euro_all$GAM_spec, evaROC_euro_all$GAM_sens,
 legend(0.7,0.2,c("RIVER","GAM"), lty=c(1,1), lwd=c(2,2),
        col=c("dodgerblue","mediumpurple"), cex=1.2, 
        pt.cex=1.2, bty="n")
-title(main=paste("AUC: RIVER = ", round(evaROC_euro_all$RIVER_auc,3), 
+title(main=paste("European All Features\nAUC: RIVER = ", round(evaROC_euro_all$RIVER_auc,3), 
                  ", GAM = ", round(evaROC_euro_all$GAM_auc,3), 
                  ", P = ", format.pval(evaROC_euro_all$pvalue, digits=2, 
                                        eps=0.001),sep=""))
 
-outfile_evaROC_euro_all <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_evaROC_v8_european_all_05-21-2020.Rdata"
+outfile_evaROC_euro_all <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_evaROC_v8_european_all_05-21-2020.RData"
 save(evaROC_euro_all, file = outfile_evaROC_euro_all)
+```
 
-model <- appRIVER_euro_all(dataInput, pseudoc=50, 
+# Run RIVER on European data with all features 
+```{r}
+model_euro_all <- appRIVER(dataInput_euro_all, pseudoc=50, 
                       theta_init=matrix(c(.99, .01, .3, .7), nrow=2), 
                       costs=c(100, 10, 1, .1, .01, 1e-3, 1e-4), 
                       verbose=TRUE)
 
 outfile_model_euro_all <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_model_european_all_05-21-2020.RData"
-save(model, file = outfile_model_euro_all)
+save(model_euro_all, file = outfile_model_euro_all)
 ```
 
-# Run RIVER on European data with common features
+# Evaluate RIVER on European data with common features
 ```{r}
 dataInput_euro_common <- getData(euro_data_common)
 evaROC_euro_common <- evaRIVER(dataInput_euro_common)
@@ -160,25 +180,29 @@ lines(1-evaROC_euro_common$GAM_spec, evaROC_euro_common$GAM_sens,
 legend(0.7,0.2,c("RIVER","GAM"), lty=c(1,1), lwd=c(2,2),
        col=c("dodgerblue","mediumpurple"), cex=1.2, 
        pt.cex=1.2, bty="n")
-title(main=paste("AUC: RIVER = ", round(evaROC_euro_common$RIVER_auc,3), 
+title(main=paste("European Common Features\nAUC: RIVER = ", round(evaROC_euro_common$RIVER_auc,3), 
                  ", GAM = ", round(evaROC_euro_common$GAM_auc,3), 
                  ", P = ", format.pval(evaROC_euro_common$pvalue, digits=2, 
                                        eps=0.001),sep=""))
 
-outfile_evaROC_euro_common <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_evaROC_v8_european_common_05-21-2020.Rdata"
+outfile_evaROC_euro_common <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_evaROC_v8_european_common_05-21-2020.RData"
 save(evaROC_euro_common, file = outfile_evaROC_euro_common)
 
-model <- appRIVER_euro_common(dataInput, pseudoc=50, 
+```
+
+# Run RIVER on European data with common features
+```{r}
+model_euro_common <- appRIVER(dataInput_euro_common, pseudoc=50, 
                       theta_init=matrix(c(.99, .01, .3, .7), nrow=2), 
                       costs=c(100, 10, 1, .1, .01, 1e-3, 1e-4), 
                       verbose=TRUE)
 
 outfile_model_euro_common <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_model_european_common_05-21-2020.RData"
-save(model, file = outfile_model_euro_common)
+save(model_euro_common, file = outfile_model_euro_common)
 ```
 
 
-# Run RIVER on African data with all features
+# Evaluate RIVER on African data with all features
 ```{r}
 dataInput_afr_all <- getData(afr_data_all)
 evaROC_afr_all <- evaRIVER(dataInput_afr_all)
@@ -197,24 +221,27 @@ lines(1-evaROC_afr_all$GAM_spec, evaROC_afr_all$GAM_sens,
 legend(0.7,0.2,c("RIVER","GAM"), lty=c(1,1), lwd=c(2,2),
        col=c("dodgerblue","mediumpurple"), cex=1.2, 
        pt.cex=1.2, bty="n")
-title(main=paste("AUC: RIVER = ", round(evaROC_afr_all$RIVER_auc,3), 
+title(main=paste("African All Features\nAUC: RIVER = ", round(evaROC_afr_all$RIVER_auc,3), 
                  ", GAM = ", round(evaROC_afr_all$GAM_auc,3), 
                  ", P = ", format.pval(evaROC_afr_all$pvalue, digits=2, 
                                        eps=0.001),sep=""))
 
-outfile_evaROC_afr_all <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_evaROC_v8_african_all_05-21-2020.Rdata"
+outfile_evaROC_afr_all <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_evaROC_v8_african_all_05-21-2020.RData"
 save(evaROC_afr_all, file = outfile_evaROC_afr_all)
+```
 
-model <- appRIVER_afr_all(dataInput, pseudoc=50, 
+# Run RIVER on African data with all features
+```{r}
+model_afr_all <- appRIVER(dataInput_afr_all, pseudoc=50, 
                       theta_init=matrix(c(.99, .01, .3, .7), nrow=2), 
                       costs=c(100, 10, 1, .1, .01, 1e-3, 1e-4), 
                       verbose=TRUE)
 
 outfile_model_afr_all <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_model_african_all_05-21-2020.RData"
-save(model, file = outfile_model_afr_all)
+save(model_afr_all, file = outfile_model_afr_all)
 ```
 
-# Run RIVER on African data with common features
+# Evaluate RIVER on African data with common features
 ```{r}
 dataInput_afr_common <- getData(afr_data_common)
 evaROC_afr_common <- evaRIVER(dataInput_afr_common)
@@ -233,20 +260,23 @@ lines(1-evaROC_afr_common$GAM_spec, evaROC_afr_common$GAM_sens,
 legend(0.7,0.2,c("RIVER","GAM"), lty=c(1,1), lwd=c(2,2),
        col=c("dodgerblue","mediumpurple"), cex=1.2, 
        pt.cex=1.2, bty="n")
-title(main=paste("AUC: RIVER = ", round(evaROC_afr_common$RIVER_auc,3), 
+title(main=paste("African Common Features\nAUC: RIVER = ", round(evaROC_afr_common$RIVER_auc,3), 
                  ", GAM = ", round(evaROC_afr_common$GAM_auc,3), 
                  ", P = ", format.pval(evaROC_afr_common$pvalue, digits=2, 
                                        eps=0.001),sep=""))
 
-outfile_evaROC_afr_common <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_evaROC_v8_african_common_05-21-2020.Rdata"
+outfile_evaROC_afr_common <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_evaROC_v8_african_common_05-21-2020.RData"
 save(evaROC_afr_common, file = outfile_evaROC_afr_common)
+```
 
-model <- appRIVER_afr_common(dataInput, pseudoc=50, 
+# Run RIVER on African data with common features
+```{r}
+model_afr_common <- appRIVER(dataInput_afr_common, pseudoc=50, 
                       theta_init=matrix(c(.99, .01, .3, .7), nrow=2), 
                       costs=c(100, 10, 1, .1, .01, 1e-3, 1e-4), 
                       verbose=TRUE)
 
 outfile_model_afr_common <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_model_african_common_05-21-2020.RData"
-save(model, file = outfile_model_afr_common)
+save(model_afr_common, file = outfile_model_afr_common)
 ```
 
