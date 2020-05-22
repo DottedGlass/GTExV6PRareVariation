@@ -22,6 +22,7 @@ mkdir ${RAREVARDIR}/data/GTEx
 mkdir ${RAREVARDIR}/data/1KG
 mkdir ${RAREVARDIR}/data/medz
 mkdir ${RAREVARDIR}/data/singlez
+mkdir ${RAREVARDIR}/data/RIVER
 <!-- mkdir ${RAREVARDIR}/data/metasoft -->
 <!-- mkdir ${RAREVARDIR}/features -->
 <!-- mkdir ${RAREVARDIR}/features/annotations -->
@@ -275,3 +276,75 @@ tabix -f ${afr_1kg}/AFR_1KG_chr${j}.vcf.gz
 ## Use GTEx and 1KG to get rare variants
 
 
+# Making Figures
+
+## Reproduced figures from mini project 2
+1a on v6 data showing median z scores across tissues
+```{bash}
+cd paper_figures
+bash pick.cartoon.example.sh
+Rscript figure1a.plot.cartoon.example.R
+```
+
+1c on v6 data showing replication rates… very different values
+```{bash}
+Rscript call_outliers/multi_tissue_replication.R
+Rscript paper_figures/figure1c.replication.rate.consistent.R
+```
+
+## Reproduced Figures v6 --> v8
+1a on v8 data
+```{bash}
+cd paper_figures
+bash pick.cartoon.example_v8.sh
+Rscript figure1a.plot.cartoon.example_v8.R
+```
+
+1c on v8 data
+```{bash}
+Rscript call_outliers/multi_tissue_replication_v8.R
+Rscript paper_figures/figure1c.replication.rate.consistent_v8.R
+```
+
+## Figures from mini project 3
+PCA highlighting AFR population 
+
+## Differences between V6 and V8
+Multitissue outliers
+
+## RIVER analysis for AFR population
+Allele Freq box plot demonstrating how many more rare alleles there are in AFA population (one box for european and one box for african)
+
+Overlap of rare variant counts
+
+AUC (RIVER model evaluation)
+
+Table of features used in EUR-ALL/AFR-ALL/COMMON
+
+RIVER eval on European, all features
+
+RIVER eval on European, common features
+
+RIVER eval on African, all features
+
+RIVER eval on African, common features
+
+
+## Comparison between AFR and EUR in v8
+Modified version of Fig. 5a from watershed paper 
+Outliers section (# of outliers per individual) 
+African and european
+Watershed > 0.5 section (# of watershed scores >0.5 per individual)
+African and european
+Watershed > 0.9 section (# of watershed scores >0.9 per individual)
+African and european
+
+Get list of all european subjects with WGS
+```{bash}
+# list of all African American individuals from GTEx v8 (some do not have WGS data)
+cat ${RAREVARDIR}/archive/download/gtex8/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS.txt | awk -F '\t' '{if ($5 == 2) print $1;}' \
+> ${RAREVARDIR}/archive/reference/gtex_v8_individuals_EUR.txt
+
+# list of all African American individuals from GTEx v8 with WGS data
+awk 'NR==FNR { lines[$0]=1; next } $0 in lines' ${RAREVARDIR}/archive/reference/gtex_v8_wgs_individuals.txt ${RAREVARDIR}/archive/reference/gtex_v8_individuals_EUR.txt > ${RAREVARDIR}/archive/reference/gtex_v8_wgs_individuals_AFA.txt
+```
