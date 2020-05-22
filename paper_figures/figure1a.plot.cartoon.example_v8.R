@@ -4,8 +4,11 @@
 
 library(ggplot2)
 library(reshape2)
+require(dplyr)
 
 dir = Sys.getenv('RAREVARDIR')
+GENE_CHOICE_v6='ENSG00000198610.6'
+GENE_CHOICE='ENSG00000004139.13'
 
 expr = read.table('expr.subset.by.genes.txt', header = T, stringsAsFactors = F)
 examples = read.table('possible.txt', header = F, stringsAsFactors = F)
@@ -28,17 +31,28 @@ get.tis = function(gene, ind) {
 dummy = mapply(get.tis, examples$gene, examples$ind)
 
 expr.melted = melt(expr, id.vars = c('Tissue','Gene'))
+
 expr.melted = expr.melted[!is.na(expr.melted$value), ]
 
-# picked one that would have a unique cartoon for each tissue
+expr.melted.counts = expr.melted %>% group_by(Gene) %>% summarize(Tcount=n_distinct(Tissue))
+
+#For Now we will look at a gene that has a unique cartoon for the exact same tissues as the v6 paper
 indtissues = c("Adipose_Subcutaneous","Liver","Lung","Stomach","Whole_Blood")
-plot.data = expr.melted[expr.melted$Gene == "ENSG00000198610.6" & expr.melted$Tissue %in% indtissues, ]
+
+expr.melted.genes = expr.melted %>% filter(Tissue %in% indtissues) %>%
+  group_by(Gene) %>%
+  summarize(Tcount=n_distinct(Tissue)) %>% filter(Tcount == 5)
+
+
+# picked one that would have a unique cartoon for each tissue
+
+plot.data = expr.melted[expr.melted$Gene == GENE_CHOICE & expr.melted$Tissue %in% indtissues, ]
 
 # for that gene, get the medz for all individual (with at least 5 tissues)
-gene.expr = expr[expr$Gene == "ENSG00000198610.6", -c(1,2)]
+gene.expr = expr[expr$Gene == GENE_CHOICE, -c(1,2)]
 gene.medz = apply(gene.expr, 2, function(x) ifelse(sum(!is.na(x)) >= 5, yes = median(x, na.rm = TRUE), no = NA))
 gene.medz = gene.medz[!is.na(gene.medz)]
-gene.medz.df = data.frame(Tissue = "Median", Gene = "ENSG00000198610.6", variable = names(gene.medz), value = gene.medz)
+gene.medz.df = data.frame(Tissue = "Median", Gene = GENE_CHOICE, variable = names(gene.medz), value = gene.medz)
 
 plot.data = rbind(plot.data, gene.medz.df)
 plot.data$Tissue = factor(plot.data$Tissue, levels = c("Adipose_Subcutaneous","Liver","Stomach","Whole_Blood","Lung","Median"))
