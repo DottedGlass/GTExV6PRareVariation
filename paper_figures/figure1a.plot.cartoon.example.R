@@ -45,8 +45,9 @@ plot.data = rbind(plot.data, gene.medz.df)
 plot.data$Tissue = factor(plot.data$Tissue, levels = c("Adipose_Subcutaneous","Liver","Stomach","Whole_Blood","Lung","Median"))
 
 
-tissue.labs <- gsub("_","\n",c("Adipose_Subcutaneous","Liver","Stomach","Whole_Blood","Lung","Median"))
+tissue.labs <- gsub("_","\n",c("Adipose_Subcutaneous","Liver","Stomach","Whole_Blood","Lung","Median\nacross Tissues"))
 names(tissue.labs) <- c("Adipose_Subcutaneous","Liver","Stomach","Whole_Blood","Lung","Median")
+
 
 
 cols = c("#FF6600","#AABB66","#99FF00","#FFDD99","#FF00BB")
@@ -56,7 +57,7 @@ names(cols) = indtissues
 pdf(paste0(dir, '/paper_figures/figure1a.cartoon.draft.pdf'), height = 7, width = 4.5)
 
 ggplot(plot.data, aes(x = value)) +
-    geom_histogram(binwidth = 0.15, colour = "white", fill = "darkgrey") + xlab('Z-score') + ylab('') +
+    geom_histogram(binwidth = 0.15, colour = "white", fill = "darkgrey") + xlab('Z-score') + ylab('Number of Individuals') +
     facet_grid(Tissue~., scales = "free",labeller=labeller(Tissue=tissue.labs)) + theme_classic() + guides(fill = FALSE) + xlim(c(-5,5)) +
     # geom_vline(xintercept = c(-0.9624364,-0.3787555,4.6037353,3.2303840,3.8570197), size = 1.1) +
     scale_fill_manual(values = cols) +
