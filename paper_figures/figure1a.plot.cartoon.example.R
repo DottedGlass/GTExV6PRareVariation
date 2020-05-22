@@ -4,6 +4,7 @@
 
 library(ggplot2)
 library(reshape2)
+library(dplyr)
 
 dir = Sys.getenv('RAREVARDIR')
 
@@ -51,6 +52,7 @@ names(tissue.labs) <- c("Adipose_Subcutaneous","Liver","Stomach","Whole_Blood","
 cols = c("#FF6600","#AABB66","#99FF00","#FFDD99","#FF00BB")
 names(cols) = indtissues
 
+#pdf(paste0(dir, '/paper_figures/figure1a.cartoon.draft.pdf'), height = 7, width = 4.5)
 pdf(paste0(dir, '/paper_figures/figure1a.cartoon.draft.pdf'), height = 7, width = 4.5)
 
 ggplot(plot.data, aes(x = value)) +
@@ -58,7 +60,8 @@ ggplot(plot.data, aes(x = value)) +
     facet_grid(Tissue~., scales = "free",labeller=labeller(Tissue=tissue.labs)) + theme_classic() + guides(fill = FALSE) + xlim(c(-5,5)) +
     # geom_vline(xintercept = c(-0.9624364,-0.3787555,4.6037353,3.2303840,3.8570197), size = 1.1) +
     scale_fill_manual(values = cols) +
-    theme(axis.ticks.y = element_text(size = 12),
+    theme(
+      #axis.ticks.y = element_text(size = 12),
           axis.text.y = element_text(size = 12),
           #strip.text = element_blank(),
           strip.background = element_blank(),
