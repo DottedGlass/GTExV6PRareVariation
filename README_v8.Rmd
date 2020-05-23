@@ -13,6 +13,7 @@ export RAREVARDIR=<path to root of folder that contains our data>
 
 Make assumed directories
 ```
+mkdir ${RAREVARDIR}/paper_figures
 mkdir ${RAREVARDIR}/logs
 mkdir ${RAREVARDIR}/preprocessing
 mkdir ${RAREVARDIR}/preprocessing/PEER
@@ -180,22 +181,39 @@ done
 ```
 
 ### Make list of individuals
-Make list of all individuals from GTEx v8. Make list of all individuals with reported African American ancestry.
+Make list of all individuals from GTEx v8. Make list of all individuals with reported African American ancestry and European ancestry.
+* `${RAREVARDIR}/reference/gtex_v8_individuals_all_normalized_samples.txt` - All 948 individuals from GTEx v8
+* `${RAREVARDIR}/reference/gtex_v8_wgs_individuals.txt` - All 838 individuals from GTEx v8 with WGS data
+* `${RAREVARDIR}/reference/gtex_v8_individuals_AFA.txt` - 121 African American individuals from GTEx v8
+* `${RAREVARDIR}/reference/gtex_v8_wgs_individuals_AFA.txt` - 103 African American individuals from GTEx v8 with WGS data
+* `${RAREVARDIR}/reference/gtex_v8_individuals_EUR.txt` - 804 European individuals from GTEx v8
+* `${RAREVARDIR}/reference/gtex_v8_wgs_individuals_EUR.txt` - 714 European individuals from GTEx v8 with WGS 
 ```{bash gtex_individuals, eval=FALSE, cache=TRUE}
-# list of all individuals from GTEx v8 (some do not have WGS data)
-cat ${RAREVARDIR}/download/gtex8/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS.txt | awk -F "\t" 'NR>1{print $1}' \
+# All individuals
+## list of all individuals from GTEx v8 (some do not have WGS data)
+cat ${RAREVARDIR}/data/GTEx/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS.txt | awk -F "\t" 'NR>1{print $1}' \
 > ${RAREVARDIR}/reference/gtex_v8_individuals_all_normalized_samples.txt
 
-# list of all individuals from GTEx v8 with WGS data
-vcf-query -l ${RAREVARDIR}/download/gtex8/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz \
+## list of all individuals from GTEx v8 with WGS data
+vcf-query -l ${RAREVARDIR}/data/GTEx/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz \
 > ${RAREVARDIR}/reference/gtex_v8_wgs_individuals.txt
 
-# list of all African American individuals from GTEx v8 (some do not have WGS data)
-cat ${RAREVARDIR}/download/gtex8/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS.txt | awk -F '\t' '{if ($5 == 2) print $1;}' \
+# African American individuals
+## list of all African American individuals from GTEx v8 (some do not have WGS data)
+cat ${RAREVARDIR}/data/GTEx/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS.txt | awk -F '\t' '{if ($5 == 2) print $1;}' \
 > ${RAREVARDIR}/reference/gtex_v8_individuals_AFA.txt
 
-# list of all African American individuals from GTEx v8 with WGS data
+## list of all African American individuals from GTEx v8 with WGS data
 awk 'NR==FNR { lines[$0]=1; next } $0 in lines' ${RAREVARDIR}/reference/gtex_v8_wgs_individuals.txt ${RAREVARDIR}/reference/gtex_v8_individuals_AFA.txt > ${RAREVARDIR}/reference/gtex_v8_wgs_individuals_AFA.txt
+
+
+# European individuals
+# list of all European individuals from GTEx v8 (some do not have WGS data)
+cat ${RAREVARDIR}/data/GTEx/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS.txt | awk -F '\t' '{if ($5 == 3) print $1;}' \
+> ${RAREVARDIR}/reference/gtex_v8_individuals_EUR.txt
+
+# list of all African American individuals from GTEx v8 with WGS data
+awk 'NR==FNR { lines[$0]=1; next } $0 in lines' ${RAREVARDIR}/reference/gtex_v8_wgs_individuals.txt ${RAREVARDIR}/reference/gtex_v8_individuals_EUR.txt > ${RAREVARDIR}/reference/gtex_v8_wgs_individuals_EUR.txt
 ```
 
 ### Make list of tissues (based on Nicole's data)
@@ -309,8 +327,10 @@ Rscript paper_figures/figure1c.replication.rate.consistent_v8.R
 ## Figures from mini project 3
 PCA highlighting AFR population 
 
-## Differences between V6 and V8
-Multitissue outliers
+Differences between V6 and V8 Multitissue outliers
+```{bash}
+python call_outliers/outliers_histogram.py
+```
 
 ## RIVER analysis for AFR population
 Allele Freq box plot demonstrating how many more rare alleles there are in AFA population (one box for european and one box for african)
@@ -339,12 +359,13 @@ African and european
 Watershed > 0.9 section (# of watershed scores >0.9 per individual)
 African and european
 
-Get list of all european subjects with WGS
+Subset multi-tissue outliers count per individual by European and African populations.
+* `${RAREVARDIR}/archive/data/v8/outliers_medz_picked_counts_per_ind_EUR.txt` - Outlier count per European individual
+* `${RAREVARDIR}/archive/data/v8/outliers_medz_picked_counts_per_ind_AFA.txt` - Outlier count per African individual
 ```{bash}
-# list of all African American individuals from GTEx v8 (some do not have WGS data)
-cat ${RAREVARDIR}/archive/download/gtex8/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS.txt | awk -F '\t' '{if ($5 == 2) print $1;}' \
-> ${RAREVARDIR}/archive/reference/gtex_v8_individuals_EUR.txt
+# European Outliers
+grep -f ${RAREVARDIR}/reference/gtex_v8_individuals_EUR.txt ${RAREVARDIR}/archive/data/v8/outliers_medz_picked_counts_per_ind.txt > ${RAREVARDIR}/archive/data/v8/outliers_medz_picked_counts_per_ind_EUR.txt
 
-# list of all African American individuals from GTEx v8 with WGS data
-awk 'NR==FNR { lines[$0]=1; next } $0 in lines' ${RAREVARDIR}/archive/reference/gtex_v8_wgs_individuals.txt ${RAREVARDIR}/archive/reference/gtex_v8_individuals_EUR.txt > ${RAREVARDIR}/archive/reference/gtex_v8_wgs_individuals_AFA.txt
+# African American outliers
+grep -f ${RAREVARDIR}/reference/gtex_v8_individuals_AFA.txt ${RAREVARDIR}/archive/data/v8/outliers_medz_picked_counts_per_ind.txt > ${RAREVARDIR}/archive/data/v8/outliers_medz_picked_counts_per_ind_AFA.txt
 ```
