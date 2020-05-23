@@ -46,6 +46,7 @@ require(RIVER)
 require(dplyr)
 require(tidyr)
 require(data.table)
+require(ggplot2)
 
 # file names
 euro_data_all <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_input_v8_european_all_05-21-2020.txt"
@@ -310,3 +311,79 @@ outfile_model_afr_common <- "/scratch/groups/abattle4/victor/GTExV6PRareVariatio
 save(model_afr_common, file = outfile_model_afr_common)
 ```
 
+# plot posterior scores
+```{r}
+# European all features
+plotPosteriors(model_euro_all, outliers=as.numeric(unlist(dataInput_euro_all$Outlier))-1)
+
+# European common features
+plotPosteriors(model_euro_common, outliers=as.numeric(unlist(dataInput_euro_common$Outlier))-1)
+
+# African all features
+plotPosteriors(model_afr_all, outliers=as.numeric(unlist(dataInput_afr_all$Outlier))-1)
+
+# African common features
+plotPosteriors(model_afr_common, outliers=as.numeric(unlist(dataInput_afr_common$Outlier))-1)
+```
+
+# Save plots of evaluation
+```{r}
+# pdf("/scratch/groups/abattle4/victor/GTExV6PRareVariationData/paper_figures/RIVER_European_all.pdf", width = 7, height = 7)
+# plot_RIVER_GAM(evaROC_euro_all,top_title="European All Features")
+# dev.off()
+# plot_RIVER_GAM(evaROC_euro_common,top_title="European Common Features")
+# plot_RIVER_GAM(evaROC_afr_all,top_title="African All Features")
+# plot_RIVER_GAM(evaROC_afr_common, top_title="African Common Features")
+
+
+```
+
+# make dataframe to compare European and African outliers, watershed posterior > 0.5, and watershed posterior > 0.9
+```{r}
+# read outlier files
+euro_outlier <- read.table("/scratch/groups/abattle4/victor/GTExV6PRareVariationData/archive/data/v8/outliers_medz_picked_counts_per_ind_EUR.txt", header = FALSE, col.names = c("indiv","num_outliers"))
+euro_outlier$ethnicity <- "European"
+
+afr_outlier <- read.table("/scratch/groups/abattle4/victor/GTExV6PRareVariationData/archive/data/v8/outliers_medz_picked_counts_per_ind_AFA.txt", header = FALSE, col.names = c("indiv","num_outliers"))
+afr_outlier$ethnicity <- "African American"
+
+
+# read RIVER models trained on common features
+load(outfile_model_euro_common)
+load(outfile_model_afr_common)
+
+# make dataframes for posterior
+euro_posterior <- data.frame(indiv=model_euro_common$indiv_name, greater_0.5=model_euro_common$RIVER_posterior>0.5, greater_0.9=model_euro_common$RIVER_posterior>0.9)
+
+afr_posterior <- data.frame(indiv=model_afr_common$indiv_name, greater_0.5=model_afr_common$RIVER_posterior>0.5, greater_0.9=model_afr_common$RIVER_posterior>0.9)
+
+euro_posterior <- euro_posterior %>% group_by(indiv) %>% summarize(count_0.5 = sum(greater_0.5), count_0.9 = sum(greater_0.9))
+euro_posterior$ethnicity <- "European"
+
+afr_posterior <- afr_posterior %>% group_by(indiv) %>% summarize(count_0.5 = sum(greater_0.5), count_0.9 = sum(greater_0.9))
+afr_posterior$ethnicity <- "African American"
+
+# combine posterior dataframes
+posterior <- rbind(euro_posterior, afr_posterior)
+posterior <- posterior %>% gather(key=key,value=value,-indiv,-ethnicity)
+posterior$type <- "RIVER"
+
+# combine outlier dataframes
+outlier <- rbind(euro_outlier, afr_outlier)
+outlier <- outlier %>% gather(key=key, value=value, -indiv, -ethnicity)
+outlier$type <- "outlier"
+
+# # combine outlier and posterior dataframes
+# box_plot_input <- rbind(outlier, posterior)
+# 
+# ggplot(box_plot_input) + geom_boxplot(aes(x=key,y=value,col=ethnicity)) + facet_wrap(type~.)
+
+# outlier boxplot
+ggplot(outlier) + geom_boxplot(aes(x=key,y=value,col=ethnicity))
+
+# RIVER histograms
+# ggplot(posterior) + geom_boxplot(aes(x=key,y=value,col=ethnicity))
+posterior %>% filter(key=="count_0.5") %>% ggplot() + geom_histogram(aes(x=value, fill=ethnicity), binwidth = 1, position = "identity") + scale_x_continuous(breaks= scales::pretty_breaks())
+
+ggplot(euro_posterior) + geom_histogram(aes(x=count_0.5))
+```
