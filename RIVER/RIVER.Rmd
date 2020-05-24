@@ -341,8 +341,9 @@ posterior %>% #filter(key=="count_0.5") %>%
   ggplot() + 
   geom_histogram(aes(x=value, color=ethnicity, y=..density..),fill="transparent", binwidth = 1, position = "identity") +
   scale_x_continuous(breaks= scales::pretty_breaks()) +
-  ggtitle("RIVER Posterior Scores") +
-  facet_wrap(key ~ .,strip.position = "bottom",labeller = facet_labeller) + ylab('Ratio of Individuals Meeting Criteria') + xlab("Number of Genes per Individual with RIVER Posterior")
+  #ggtitle("RIVER Posterior Scores") +
+  facet_wrap(key ~ .,strip.position = "bottom",labeller = facet_labeller) + ylab('Ratio of Individuals Meeting Criteria') + xlab("Number of Genes per Individual with RIVER Posterior") +
+  theme(legend.position = "bottom")
 ```
 ```{r}
 ggplot(euro_posterior) + geom_histogram(aes(x=count_0.5))
