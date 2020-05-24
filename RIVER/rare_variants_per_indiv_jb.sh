@@ -8,11 +8,14 @@
 #SBATCH --mail-type=end
 #SBATCH --mail-user=xwang145@jhu.edu
 
-
+## Load Modules
 module load vcftools
 module load bcftools
 module load htslib
+
+## Activate Conda Environment with appropriate python version
 conda activate atg
+
 
 gtex_code=/home-4/xwang145@jhu.edu/code/GTExV6PRareVariation/RIVER
 ls $gtex_code
@@ -51,7 +54,7 @@ ${jb_out}/GTEx_AFA_AF_rare_chr${j}.frq
 cat ~/work/jessica/ATG/Final/reference/GTEx_AFA_AF_rare_chr${j}.frq >> ~/work/jessica/ATG/Final/reference/GTEx_AFA_AF_rare.frq
 done
 
-
+# In some cases the ALT Allele is not the minor allele. So we split into two files to make processing the different cases easier
 infile=~/work/jessica/ATG/Final/reference/GTEx_AFA_AF_rare.frq
 tail -n +2 ${infile} | awk 'BEGIN {OFS="\t"} {split($NF,last,":");  if((last[2] < 0.5)) {print $1,$2-1,$2}}' > ~/work/jessica/ATG/Final/reference/out_file1.bed
 tail -n +2 ${infile} | awk 'BEGIN {OFS="\t"} {split($NF,last,":");  if((last[2] > 0.5)) {print $1,$2-1,$2}}' > ~/work/jessica/ATG/Final/reference/out_file2.bed
