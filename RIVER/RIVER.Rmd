@@ -151,24 +151,7 @@ evaROC_euro_all <- evaRIVER(dataInput_euro_all)
 cat('AUC (GAM-genomic annotation model) = ', round(evaROC_euro_all$GAM_auc,3), '\n')
 cat('AUC (RIVER) = ', round(evaROC_euro_all$RIVER_auc,3), '\n')
 
-plot_RIVER_GAM(evaROC_euro_all,top_title="European All Features")
-# 
-# par(mar=c(6.1, 6.1, 4.1, 4.1))
-# plot(NULL, xlim=c(0,1), ylim=c(0,1), 
-#      xlab="False positive rate", ylab="True positive rate", 
-#      cex.axis=1.3, cex.lab=1.6)
-# abline(0, 1, col="gray")
-# lines(1-evaROC_euro_all$RIVER_spec, evaROC_euro_all$RIVER_sens, 
-#       type="s", col='dodgerblue', lwd=2)
-# lines(1-evaROC_euro_all$GAM_spec, evaROC_euro_all$GAM_sens, 
-#       type="s", col='mediumpurple', lwd=2)
-# legend(0.7,0.2,c("RIVER","GAM"), lty=c(1,1), lwd=c(2,2),
-#        col=c("dodgerblue","mediumpurple"), cex=1.2, 
-#        pt.cex=1.2, bty="n")
-# title(main=paste("European All Features\nAUC: RIVER = ", round(evaROC_euro_all$RIVER_auc,3), 
-#                  ", GAM = ", round(evaROC_euro_all$GAM_auc,3), 
-#                  ", P = ", format.pval(evaROC_euro_all$pvalue, digits=2, 
-#                                        eps=0.001),sep=""))
+plot_RIVER_GAM(evaROC_euro_all,top_title="European All Features")ßß
 
 outfile_evaROC_euro_all <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_evaROC_v8_european_all_05-21-2020.RData"
 save(evaROC_euro_all, file = outfile_evaROC_euro_all)
@@ -194,23 +177,6 @@ cat('AUC (GAM-genomic annotation model) = ', round(evaROC_euro_common$GAM_auc,3)
 cat('AUC (RIVER) = ', round(evaROC_euro_common$RIVER_auc,3), '\n')
 
 plot_RIVER_GAM(evaROC_euro_common,top_title="European Common Features")
-# 
-# par(mar=c(6.1, 6.1, 4.1, 4.1))
-# plot(NULL, xlim=c(0,1), ylim=c(0,1), 
-#      xlab="False positive rate", ylab="True positive rate", 
-#      cex.axis=1.3, cex.lab=1.6)
-# abline(0, 1, col="gray")
-# lines(1-evaROC_euro_common$RIVER_spec, evaROC_euro_common$RIVER_sens, 
-#       type="s", col='dodgerblue', lwd=2)
-# lines(1-evaROC_euro_common$GAM_spec, evaROC_euro_common$GAM_sens, 
-#       type="s", col='mediumpurple', lwd=2)
-# legend(0.7,0.2,c("RIVER","GAM"), lty=c(1,1), lwd=c(2,2),
-#        col=c("dodgerblue","mediumpurple"), cex=1.2, 
-#        pt.cex=1.2, bty="n")
-# title(main=paste("European Common Features\nAUC: RIVER = ", round(evaROC_euro_common$RIVER_auc,3), 
-#                  ", GAM = ", round(evaROC_euro_common$GAM_auc,3), 
-#                  ", P = ", format.pval(evaROC_euro_common$pvalue, digits=2, 
-#                                        eps=0.001),sep=""))
 
 outfile_evaROC_euro_common <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_evaROC_v8_european_common_05-21-2020.RData"
 save(evaROC_euro_common, file = outfile_evaROC_euro_common)
@@ -238,23 +204,6 @@ cat('AUC (RIVER) = ', round(evaROC_afr_all$RIVER_auc,3), '\n')
 
 plot_RIVER_GAM(evaROC_afr_all,top_title="African All Features")
 
-# par(mar=c(6.1, 6.1, 4.1, 4.1))
-# plot(NULL, xlim=c(0,1), ylim=c(0,1), 
-#      xlab="False positive rate", ylab="True positive rate", 
-#      cex.axis=1.3, cex.lab=1.6)
-# abline(0, 1, col="gray")
-# lines(1-evaROC_afr_all$RIVER_spec, evaROC_afr_all$RIVER_sens, 
-#       type="s", col='dodgerblue', lwd=2)
-# lines(1-evaROC_afr_all$GAM_spec, evaROC_afr_all$GAM_sens, 
-#       type="s", col='mediumpurple', lwd=2)
-# legend(0.7,0.2,c("RIVER","GAM"), lty=c(1,1), lwd=c(2,2),
-#        col=c("dodgerblue","mediumpurple"), cex=1.2, 
-#        pt.cex=1.2, bty="n")
-# title(main=paste("African All Features\nAUC: RIVER = ", round(evaROC_afr_all$RIVER_auc,3), 
-#                  ", GAM = ", round(evaROC_afr_all$GAM_auc,3), 
-#                  ", P = ", format.pval(evaROC_afr_all$pvalue, digits=2, 
-#                                        eps=0.001),sep=""))
-
 outfile_evaROC_afr_all <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_evaROC_v8_african_all_05-21-2020.RData"
 save(evaROC_afr_all, file = outfile_evaROC_afr_all)
 ```
@@ -278,23 +227,6 @@ cat('AUC (GAM-genomic annotation model) = ', round(evaROC_afr_common$GAM_auc,3),
 cat('AUC (RIVER) = ', round(evaROC_afr_common$RIVER_auc,3), '\n')
 
 plot_RIVER_GAM(evaROC_afr_common, top_title="African Common Features")
-
-# par(mar=c(6.1, 6.1, 4.1, 4.1))
-# plot(NULL, xlim=c(0,1), ylim=c(0,1), 
-#      xlab="False positive rate", ylab="True positive rate", 
-#      cex.axis=1.3, cex.lab=1.6)
-# abline(0, 1, col="gray")
-# lines(1-evaROC_afr_common$RIVER_spec, evaROC_afr_common$RIVER_sens, 
-#       type="s", col='dodgerblue', lwd=2)
-# lines(1-evaROC_afr_common$GAM_spec, evaROC_afr_common$GAM_sens, 
-#       type="s", col='mediumpurple', lwd=2)
-# legend(0.7,0.2,c("RIVER","GAM"), lty=c(1,1), lwd=c(2,2),
-#        col=c("dodgerblue","mediumpurple"), cex=1.2, 
-#        pt.cex=1.2, bty="n")
-# title(main=paste("African Common Features\nAUC: RIVER = ", round(evaROC_afr_common$RIVER_auc,3), 
-#                  ", GAM = ", round(evaROC_afr_common$GAM_auc,3), 
-#                  ", P = ", format.pval(evaROC_afr_common$pvalue, digits=2, 
-#                                        eps=0.001),sep=""))
 
 outfile_evaROC_afr_common <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_evaROC_v8_african_common_05-21-2020.RData"
 save(evaROC_afr_common, file = outfile_evaROC_afr_common)
