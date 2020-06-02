@@ -12,7 +12,7 @@ export RAREVARDIR=<path to root of folder that contains our data>
 ```
 
 Make assumed directories
-```
+```{bash sub_directories, eval=FALSE, cache=TRUE}
 mkdir ${RAREVARDIR}/paper_figures
 mkdir ${RAREVARDIR}/logs
 mkdir ${RAREVARDIR}/preprocessing
@@ -21,28 +21,28 @@ mkdir ${RAREVARDIR}/reference
 mkdir ${RAREVARDIR}/data
 mkdir ${RAREVARDIR}/data/GTEx
 mkdir ${RAREVARDIR}/data/1KG
+mkdir ${RAREVARDIR}/data/1KG_AFR
 mkdir ${RAREVARDIR}/data/medz
 mkdir ${RAREVARDIR}/data/singlez
-mkdir ${RAREVARDIR}/data/RIVER
-<!-- mkdir ${RAREVARDIR}/data/metasoft -->
-<!-- mkdir ${RAREVARDIR}/features -->
-<!-- mkdir ${RAREVARDIR}/features/annotations -->
-<!-- mkdir ${RAREVARDIR}/features/annotations/ACMG -->
-<!-- mkdir ${RAREVARDIR}/features/annotations/ClinVar -->
-<!-- mkdir ${RAREVARDIR}/features/annotations/GWAS -->
-<!-- mkdir ${RAREVARDIR}/features/annotations/OMIM -->
-<!-- mkdir ${RAREVARDIR}/features/annotations/Orphanet -->
-<!-- mkdir ${RAREVARDIR}/features/annotations/Other -->
-<!-- mkdir ${RAREVARDIR}/RIVER -->
-<!-- mkdir ${RAREVARDIR}/RIVER/code -->
-<!-- mkdir ${RAREVARDIR}/RIVER/code/mfiles -->
-<!-- mkdir ${RAREVARDIR}/RIVER/data -->
-<!-- mkdir ${RAREVARDIR}/RIVER/data/expression -->
-<!-- mkdir ${RAREVARDIR}/RIVER/data/score -->
-<!-- mkdir ${RAREVARDIR}/RIVER/data/score/indiv -->
-<!-- mkdir ${RAREVARDIR}/RIVER/data/score/feature -->
-<!-- mkdir ${RAREVARDIR}/RIVER/data/rvsite -->
-<!-- mkdir ${RAREVARDIR}/data/wgs -->
+# mkdir ${RAREVARDIR}/data/metasoft
+# mkdir ${RAREVARDIR}/features
+# mkdir ${RAREVARDIR}/features/annotations
+# mkdir ${RAREVARDIR}/features/annotations/ACMG
+# mkdir ${RAREVARDIR}/features/annotations/ClinVar
+# mkdir ${RAREVARDIR}/features/annotations/GWAS
+# mkdir ${RAREVARDIR}/features/annotations/OMIM
+# mkdir ${RAREVARDIR}/features/annotations/Orphanet
+# mkdir ${RAREVARDIR}/features/annotations/Other
+mkdir ${RAREVARDIR}/RIVER
+# mkdir ${RAREVARDIR}/RIVER/code
+# mkdir ${RAREVARDIR}/RIVER/code/mfiles
+# mkdir ${RAREVARDIR}/RIVER/data
+# mkdir ${RAREVARDIR}/RIVER/data/expression
+# mkdir ${RAREVARDIR}/RIVER/data/score
+# mkdir ${RAREVARDIR}/RIVER/data/score/indiv
+# mkdir ${RAREVARDIR}/RIVER/data/score/feature
+# mkdir ${RAREVARDIR}/RIVER/data/rvsite
+# mkdir ${RAREVARDIR}/data/wgs
 ```
 
 
@@ -89,32 +89,66 @@ Download from Gencode the v26 annotations (ftp://ftp.ebi.ac.uk/pub/databases/gen
 ```{bash gencode, eval=FALSE, cache=TRUE} 
 # gencode.v26.annotation.gtf
 wget -P ${RAREVARDIR}/data/GTEx ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_26/gencode.v26.annotation.gtf.gz
-gunzip ${RAREVARDIR}/data/GTEx/gencode.v26.annotation.gtf.gz
+zcat ${RAREVARDIR}/data/GTEx/gencode.v26.annotation.gtf.gz > ${RAREVARDIR}/data/GTEx/gencode.v26.annotation.gtf
+
 
 ```
 
 
 Download from dbGaP: <br>
+Save the following to `${RAREVARDIR}/data/GTEx`
 (It is possible some of the file names may be different in the final release.)
 * `GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz` (WGS for v8 individuals)
 <!-- * ASE files -->
 * `GTEx_Analysis_2017-06-05_v8_Annotations_SampleAttributesDS.txt` (information on tissue samples)
-* `GTEx_Analysis_2015-01-12_Annotations_SubjectPhenotypesDS.txt` (subject annotations, such as reported ethnicity)
+* `GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS.txt` (subject annotations, such as reported ethnicity)
+
+Example of copying dbGaP files from locations in MARCC to `${RAREVARDIR}/data/GTEx`
+```{bash dbGap, cache=TRUE, eval=FALSE}
+# WGS for v8 individuals
+cp /work-zfs/abattle4/bstrober/rare_variant/gtex_v8/splicing/input_data/variant_calls/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz ${RAREVARDIR}/data/GTEx/.
+
+# ***Revisit may not need***
+# information on tissue samples
+cp /work-zfs/abattle4/lab_data/GTEx_v8/sample_annotations/GTEx_Analysis_2017-06-05_v8_Annotations_SampleAttributesDS.txt ${RAREVARDIR}/data/GTEx/.
+
+# subject annotations, such as reported ethnicity
+cp /work-zfs/abattle4/lab_data/GTEx_v8/sample_annotations/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPhenotypesDS.txt ${RAREVARDIR}/data/GTEx/.
+```
 
 Download from 1KG: <br>
-1000 Genomes whole genome sequencing data is used to compute allele frequencies on the population of interest. There is code later on that can be used to download the vcf files for all autosomes in release 20181203.
-* `http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20181203_biallelic_SNV/`
-```{bash download_1KG, eval=FALSE, cache=TRUE}
-# Use ./afr_freq.sh
+1000 Genomes whole genome sequencing data is used to compute allele frequencies on the population of interest. Save the WGS data to `${RAREVARDIR}/data/1KG`.
 
+`http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20181203_biallelic_SNV/`
+Integrated phased Biallelic SNP call set for the unrelated samples (N=5248)
+The set is restricted to biallelic SNVs. These files contain a call set produced by aligning the 1000 Genomes Project sequence data to GRCh38 and calling directly against GRCh38. Multiple callers were used in calling, with the call sets being integrated before final genotyping and phasing.
+The set is restricted to biallelic SNVs.
+
+
+The following downloads the vcf files for all autosomes in release 20181203 to `${RAREVARDIR}/data/1KG`. This will take some time. 
+```{bash download_1KG, eval=FALSE, cache=TRUE}
 skg=${RAREVARDIR}/data/1KG
 
-loop on j = chromosome #
-wget -P ${skg}/ http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20181203_biallelic_SNV/ALL.chr${j}.shapeit2_integrated_v1a.GRCh38.20181129.phased.vcf.gz
-wget -P ${skg}/ http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20181203_biallelic_SNV/ALL.chr${j}.shapeit2_integrated_v1a.GRCh38.20181129.phased.vcf.gz.tbi
+wget -P ${skg}/ http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20181203_biallelic_SNV/20181203_biallelic_SNV_manifest.txt
+for j in {1..22}; do
+  wget -P ${skg}/ http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20181203_biallelic_SNV/ALL.chr${j}.shapeit2_integrated_v1a.GRCh38.20181129.phased.vcf.gz
+  wget -P ${skg}/ http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/release/20181203_biallelic_SNV/ALL.chr${j}.shapeit2_integrated_v1a.GRCh38.20181129.phased.vcf.gz.tbi
+done
+
+# download and check manifest 
+awk -v dir="$skg" '{print $3,dir"/"$1}' ${skg}/20181203_biallelic_SNV_manifest.txt > ${skg}/20181203_biallelic_SNV_manifest.md5
+md5sum --check ${skg}/20181203_biallelic_SNV_manifest.md5
 ```
+
 Get list of African samples from 1KG (Jessica)
 ```{bash download_1KG_AFR_list, eval=FALSE, cache=TRUE}
+#Download sample IDs and extract African Population IDs, keeping subpop info in case it is of interest later
+afr_1kg=${RAREVARDIR}/data/1KG_AFR
+wget -P ${RAREVARDIR}/data/1KG/ ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel
+awk < ${RAREVARDIR}/data/1KG/integrated_call_samples_v3.20130502.ALL.panel '($3=="AFR"){print $1, $2}' > $afr_1kg/samples_v3.20130502.AFR.txt
+
+# get list of sample IDs only
+awk '($3=="AFR"){print $1}' ${RAREVARDIR}/data/1KG/integrated_call_samples_v3.20130502.ALL.panel > $afr_1kg/afr.keep
 
 ```
 
@@ -167,12 +201,17 @@ Get list of African samples from 1KG (Jessica)
 
 ## GTEx v8
 ### Expression data correction and normalization
-Obtain gene expression data that is corrected and normalized from Nicole. This data was saved to `$RAREVARDIR/preprocessing/PEER_gtex8`
+Obtain gene expression data that is corrected and normalized from Nicole. This data was saved to `$RAREVARDIR/preprocessing/PEER_nicole`
+```{bash nicole_data, eval=FALSE, cache=TRUE}
+mkdir ${RAREVARDIR}/preprocessing/PEER_nicole
+cp /work-zfs/abattle4/bstrober/rare_variant/gtex_v8/splicing/unsupervised_modeling/unsupervised_learning_input/total_expression_data_from_nicole/* ${RAREVARDIR}/preprocessing/PEER_nicole/.
+```
 
-Convert the expression data from long to wide.
+
+Convert the expression data table from long to wide.
 ```{bash long_to_wide, eval=FALSE, cache=TRUE}
-infolder=$RAREVARDIR/preprocessing/PEER_gtex8
-outfolder=$RAREVARDIR/preprocessing/PEER_gtex8_wide
+infolder=$RAREVARDIR/preprocessing/PEER_nicole
+outfolder=$RAREVARDIR/preprocessing/PEER
 for file in $(ls ${infolder}/*globalOutliers.v8ciseqtls.removed.outlierGenes.zscores.txt); do
 base=$(basename $file)
 echo ${file}
@@ -218,7 +257,7 @@ awk 'NR==FNR { lines[$0]=1; next } $0 in lines' ${RAREVARDIR}/reference/gtex_v8_
 
 ### Make list of tissues (based on Nicole's data)
 ```{bash , eval=FALSE, cache=TRUE}
-ls ${RAREVARDIR}/preprocessing/PEER_gtex8 | cut -d. -f1 \
+ls ${RAREVARDIR}/preprocessing/PEER | cut -d. -f1 \
 > ${RAREVARDIR}/reference/gtex_v8_tissues_all_normalized_samples.txt
 ```
 
@@ -231,7 +270,7 @@ python preprocessing/gather_filter_normalized_expression_v8.py
 This list will be used to filter out genes for those that are protein coding and lincRNA coding
 **Resulting `reference/gencode.v26.genes.v8.patched_contigs_genetypes_autosomal.txt` may be empty for some reason**
 ```{bash gencode_genes, eval=FALSE, cache=TRUE}
-bash preprocessing/process.reference.files_v8.sh ${RAREVARDIR}/download/gtex8/gencode.v26.GRCh38.genes.gtf.gz ${RAREVARDIR}/download/gencode/gencode.v26.annotation.gtf
+bash preprocessing/process.reference.files_v8.sh ${RAREVARDIR}/data/GTEx/gencode.v26.GRCh38.genes.gtf.gz ${RAREVARDIR}/download/gencode/gencode.v26.annotation.gtf
 ```
 
 ### Call multi-tissue outliers
@@ -269,17 +308,16 @@ Description: list of GTEx v8 individuals that have WGS data and are multi-tissue
 ## 1KG
 
 ### Subset 1KG
-Subset 1KG for African samples
+Subset 1KG for African samples (look into doing this with bcfTools)
 ```{bash subset_1KG, eval=FALSE, cache=TRUE}
-skg=/scratch/groups/abattle4/jessica/1KG_vcf_biallelic
-gen_data_dir=/scratch/groups/abattle4/jessica/ATG/Final/data
-afr_1kg=/scratch/groups/abattle4/jessica/ATG/Final/1KG_AFR_biallelic
+skg=${RAREVARDIR}/data/1KG
+afr_1kg=${RAREVARDIR}/data/1KG_AFR
 
 bgzip -fdc ${skg}/ALL.chr${j}.shapeit2_integrated_v1a.GRCh38.20181129.phased.vcf.gz > ${skg}/ALL.chr${j}.shapeit2_integrated_v1a.GRCh38.20181129.phased.vcf
 sed 's/^##fileformat=VCFv4.3/##fileformat=VCFv4.2/' ${skg}/ALL.chr${j}.shapeit2_integrated_v1a.GRCh38.20181129.phased.vcf  > ${skg}/ALL.chr${j}.shapeit2_integrated_v1a.GRCh38.20181129_v42.phased.vcf
 
 vcftools --vcf ${skg}/ALL.chr${j}.shapeit2_integrated_v1a.GRCh38.20181129_v42.phased.vcf \
-  --keep ${gen_data_dir}/1kg_afr.keep \
+  --keep ${afr_1kg}/afr.keep \
   --remove-indels --remove-filtered-all \
   --max-missing-count 10 \
   --not-chr X --recode \
@@ -291,8 +329,14 @@ tabix -f ${afr_1kg}/AFR_1KG_chr${j}.vcf.gz
 ```
 
 
+### Get frequency 
+
 ## Use GTEx and 1KG to get rare variants
 
+## Analysis of African American population
+Get number of rare variants (not neccessarily those within 10kb of target genes)
+see
+RIVER/rare_variants_per_indiv_jb.sh
 
 # Making Figures
 
@@ -334,6 +378,9 @@ python call_outliers/outliers_histogram.py
 
 ## RIVER analysis for AFR population
 Allele Freq box plot demonstrating how many more rare alleles there are in AFA population (one box for european and one box for african)
+```{bash}
+Rscript RIVER/compare_rare_variants.R
+```
 
 Overlap of rare variant counts
 
