@@ -36,6 +36,7 @@ def split_by_tissue(sample_dict, GTEX_fh, OUT_DIR, END):
 	'''
 	Read in GTEx RPKM file and split by tissues.
 	'''
+	print("Splitting by tissue...")
 	GTEX = open(GTEX_fh)
 	for line in GTEX:
 		line = line.rstrip().split('\t')
@@ -67,6 +68,8 @@ def split_by_tissue(sample_dict, GTEX_fh, OUT_DIR, END):
 
 	for tissue in file_dict:
 		file_dict[tissue].close()
+	
+	print("Done")
 
 
 
