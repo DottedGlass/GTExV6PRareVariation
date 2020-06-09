@@ -15,7 +15,7 @@ Make assumed directories
 ```{bash sub_directories, eval=FALSE, cache=TRUE}
 mkdir ${RAREVARDIR}/paper_figures
 mkdir ${RAREVARDIR}/logs
-mkdir ${RAREVARDIR}/preprocessing
+mkdir ${RAREVARDIR}/preprocessingx
 mkdir ${RAREVARDIR}/preprocessing/PEER
 mkdir ${RAREVARDIR}/reference
 mkdir ${RAREVARDIR}/data
@@ -108,7 +108,6 @@ Example of copying dbGaP files from locations in MARCC to `${RAREVARDIR}/data/GT
 # WGS for v8 individuals
 cp /work-zfs/abattle4/bstrober/rare_variant/gtex_v8/splicing/input_data/variant_calls/GTEx_Analysis_2017-06-05_v8_WholeGenomeSeq_838Indiv_Analysis_Freeze.SHAPEIT2_phased.vcf.gz ${RAREVARDIR}/data/GTEx/.
 
-# ***Revisit may not need***
 # information on tissue samples
 cp /work-zfs/abattle4/lab_data/GTEx_v8/sample_annotations/GTEx_Analysis_2017-06-05_v8_Annotations_SampleAttributesDS.txt ${RAREVARDIR}/data/GTEx/.
 
@@ -201,6 +200,34 @@ awk '($3=="AFR"){print $1}' ${RAREVARDIR}/data/1KG/integrated_call_samples_v3.20
 
 ## GTEx v8
 ### Expression data correction and normalization
+
+#### Generate rpkm and read count matrices from GTEx V8 combined file
+```{bash tpkm_read_count, eval=FALSE, cache=TRUE}
+cat ${RAREVARDIR}/data/GTEx/GTEx_Analysis_2017-06-05_v8_Annotations_SampleAttributesDS.txt | \
+	cut -f1,14 | sed 's/ - /_/' | sed 's/ /_/g' | sed 's/(//' | sed 's/)//' | sed 's/c-1/c1/' | grep -v NA12878 > \
+	${RAREVARDIR}/preprocessing/gtex_v8_samples_tissues.txt
+
+python preprocessing/split_by_tissues.py \
+    --GTEX ${RAREVARDIR}/data/GTEx/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_tpm.gct \
+    --SAMPLE ${RAREVARDIR}/preprocessing/gtex_v8_samples_tissues.txt \
+    --OUT ${RAREVARDIR}/preprocessing/PEER \
+    --END .tpm.txt
+
+python preprocessing/split_by_tissues.py \
+    --GTEX ${RAREVARDIR}/data/GTEx/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_reads.gct \
+    --SAMPLE ${RAREVARDIR}/preprocessing/gtex_v8_samples_tissues.txt \
+    --OUT ${RAREVARDIR}/preprocessing/PEER \
+    --END .reads.txt
+```
+
+#### Run bash scripts to generate PEER corrected data (includes non-EAs) with covariates removed
+(Uses multiple cores. Currently set to 10 cores. Can be altered by changing the number of cores <br> 
+specified by `parallel --jobs 10` in the scripts `preprocessing/PEER/calc.PEER.factors.all.tissues.sh` and <br>
+`preprocessing/PEER/calc.residuals.sh`)
+```{bash peer_correction, eval=FALSE, cache=TRUE}
+bash preprocessing/PEER/PEER.pipeline.sh
+```
+
 Obtain gene expression data that is corrected and normalized from Nicole. This data was saved to `$RAREVARDIR/preprocessing/PEER_nicole`
 ```{bash nicole_data, eval=FALSE, cache=TRUE}
 mkdir ${RAREVARDIR}/preprocessing/PEER_nicole
