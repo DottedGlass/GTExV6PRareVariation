@@ -3,43 +3,6 @@ title: "RIVER"
 output: html_notebook
 ---
 
-Sample data
-
-```{r}
-library("RIVER")
-filename <- system.file("extdata", "simulation_RIVER.gz", 
-                       package="RIVER")
-dataInput <- getData(filename) # import experimental data
-
-Feat <- t(Biobase::exprs(dataInput)) # genomic features (G)
-Out <- as.numeric(unlist(dataInput$Outlier))-1 # outlier status (E)
-
-head(Feat)
-head(Out)
-
-evaROC <- evaRIVER(dataInput)
-cat('AUC (GAM-genomic annotation model) = ', round(evaROC$GAM_auc,3), '\n')
-cat('AUC (RIVER) = ', round(evaROC$RIVER_auc,3), '\n')
-
-par(mar=c(6.1, 6.1, 4.1, 4.1))
-plot(NULL, xlim=c(0,1), ylim=c(0,1), 
-     xlab="False positive rate", ylab="True positive rate", 
-     cex.axis=1.3, cex.lab=1.6)
-abline(0, 1, col="gray")
-lines(1-evaROC$RIVER_spec, evaROC$RIVER_sens, 
-      type="s", col='dodgerblue', lwd=2)
-lines(1-evaROC$GAM_spec, evaROC$GAM_sens, 
-      type="s", col='mediumpurple', lwd=2)
-legend(0.7,0.2,c("RIVER","GAM"), lty=c(1,1), lwd=c(2,2),
-       col=c("dodgerblue","mediumpurple"), cex=1.2, 
-       pt.cex=1.2, bty="n")
-title(main=paste("AUC: RIVER = ", round(evaROC$RIVER_auc,3), 
-                 ", GAM = ", round(evaROC$GAM_auc,3), 
-                 ", P = ", format.pval(evaROC$pvalue, digits=2, 
-                                       eps=0.001),sep=""))
-```
-
-
 # Load libraries and file names
 ```{r}
 require(RIVER)
@@ -108,7 +71,7 @@ afr_df$Zscore <- zscore_list
 ## format columns
 afr_df <- afr_df %>% select(-N2pair,N2pair) # move N2pair column to last column
 
-# drop rows with NA in zscores
+# drop rows with NA in zscores (NEED TO ACCOUNT FOR N2)
 afr_df <- afr_df[complete.cases(zscore_list), ]
 
 # save version that keeps all features
@@ -151,7 +114,7 @@ evaROC_euro_all <- evaRIVER(dataInput_euro_all)
 cat('AUC (GAM-genomic annotation model) = ', round(evaROC_euro_all$GAM_auc,3), '\n')
 cat('AUC (RIVER) = ', round(evaROC_euro_all$RIVER_auc,3), '\n')
 
-plot_RIVER_GAM(evaROC_euro_all,top_title="European All Features")ßß
+plot_RIVER_GAM(evaROC_euro_all,top_title="European All Features")
 
 outfile_evaROC_euro_all <- "/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_evaROC_v8_european_all_05-21-2020.RData"
 save(evaROC_euro_all, file = outfile_evaROC_euro_all)
@@ -331,7 +294,7 @@ facet_labeller <- function(variable,value){
 posterior  %>%
 ggplot() + geom_boxplot(aes(x=key,y=value,col=ethnicity))+
   facet_wrap(key ~.,scales="free",labeller = facet_labeller, strip.position="bottom") +
-  ylab('Number of Individuals Meeting Criteria') + xlab("Number of Genes per Individual with RIVER Posterior") +
+  ylab('Number of Individuals with RIVER \nposterior scores above threshold') +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
 ```
 ```{r}
@@ -347,4 +310,174 @@ posterior %>% #filter(key=="count_0.5") %>%
 ```
 ```{r}
 ggplot(euro_posterior) + geom_histogram(aes(x=count_0.5))
+```
+
+# RIVER with Watershed
+https://github.com/BennyStrobes/Watershed
+
+```{R file_names}
+# file names
+euro_data_all <- "/scratch/groups/abattle4/victor/GTExV8_RareVariationData/RIVER/river_input_v8_european_all_06-09-2020.txt"
+euro_data_common <- "/scratch/groups/abattle4/victor/GTExV8_RareVariationData/RIVER/river_input_v8_european_common_06-09-2020.txt"
+afr_data_all <- "/scratch/groups/abattle4/victor/GTExV8_RareVariationData/RIVER/river_input_v8_african_all_06-09-2020.txt.txt"
+afr_data_common <- "/scratch/groups/abattle4/victor/GTExV8_RareVariationData/RIVER/river_input_v8_african_common_06-09-2020.txt"
+```
+
+
+```{R prepare_euro_data}
+# european data on common features
+euro_df <- read.table('/work-zfs/abattle4/bstrober/rare_variant/gtex_v8/splicing/unsupervised_modeling/unsupervised_learning_input/fully_observed_merged_outliers_0.01_genes_intersection_between_te_ase_splicing_features_filter_no_tissue_anno_N2_pairs_3.txt', header=TRUE)
+
+## rename columns
+euro_df <- euro_df %>% rename(SubjectID = SubjectID, GeneName = GeneName, GC = gc, CpG = cpg, bStatistic = bstatistic, priPhCons = priphcons, mamPhCons = mamphcons, verPhCons = verphcons, priPhyloP = priphylop, mamPhyloP = mamphylop, verPhyloP = verphylop, GerpN = gerpn, GerpS = gerps, PHRED = phred, SIFTcat_deleterious = siftcat_deleterious, SIFTcat_tolerated = siftcat_tolerated, SIFTval = siftval, PolyPhenCat_benign = polyphencat_benign, PolyPhenCat_possibly_damaging = polyphencat_possibly_damaging, PolyPhenCat_probably_damaging = polyphencat_probably_damaging, PolyPhenCat_unknown = polyphencat_unknown, PolyPhenVal = polyphenval, dist_to_tss = distTSS, N2pair = N2pair)
+
+# remove splicing and ase pvalues
+euro_df <- subset(euro_df, select = -c(splicing_pvalue,ase_pvalue) )
+
+## save version that keeps all features
+write.table(x = euro_df, row.names = FALSE, quote = FALSE, file = euro_data_all)
+
+## keep features that are common between european and african data
+euro_df <- euro_df %>% select(SubjectID, GeneName, GC, CpG, bStatistic, priPhCons, mamPhCons, verPhCons, priPhyloP, mamPhyloP, verPhyloP, GerpN, GerpS, PHRED, SIFTcat_deleterious, SIFTcat_tolerated, SIFTval, PolyPhenCat_benign, PolyPhenCat_possibly_damaging, PolyPhenCat_probably_damaging, PolyPhenCat_unknown, PolyPhenVal, dist_to_tss, total_expression_pvalue, N2pair)
+
+## save version with common features
+write.table(x = euro_df, row.names = FALSE, quote = FALSE, file = euro_data_common)
+```
+
+```{r prepare_afr_data}
+# african data
+afr_df <- read.table('/work-zfs/abattle4/bstrober/random_projects/feature_generation_for_victor_and_jessica/river_input_gene_level.txt', header=TRUE)
+
+## get zscores
+z_scores <- read.table('/scratch/groups/abattle4/victor/GTExV8_RareVariationData/data/outliers_medz_zscores.txt', header=TRUE, check.names = FALSE)
+
+zscore_table <- z_scores %>% gather(key="SubjectID",value="Zscore",-GENE) %>% rename(GeneName=GENE)
+zscore_table <- as.data.table(zscore_table)
+setkey(zscore_table,GeneName,SubjectID)
+
+pvalue_list <- vector("numeric",nrow(afr_df))
+for (i in seq(nrow(afr_df))) {
+  subject <- as.character(afr_df[i,1])
+  gene <- as.character(afr_df[i,2])
+  pvalue_list[i] <- 2 * pnorm(-abs(zscore_table[.(gene,subject)]$Zscore))
+}
+
+
+# add pvalues to afr_df
+afr_df$pvalue <- pvalue_list
+
+## format columns
+afr_df <- afr_df %>% select(-N2pair,N2pair) # move N2pair column to last column
+
+# drop rows with NA in pvalues (NEED TO ACCOUNT FOR N2)
+afr_df <- afr_df[complete.cases(zscore_list), ]
+N2_rows_to_keep <- complete.cases(afr_df$N2pair)
+pair_names = seq(1, sum(N2_rows_to_keep)/2)
+for (i in pair_names) {
+  drop_row <- which(afr_df$N2pair == i)
+  if (length(drop_rows) == 1) {
+    afr_df <- afr_df[!(row.names(afr_df) %in% drop_row), ]
+  }
+}
+
+# save version that keeps all features
+write.table(x = afr_df, row.names = FALSE, quote = FALSE, file = afr_data_all)
+
+# keep features that are common between european and african data
+afr_df <- afr_df %>% select(SubjectID, GeneName, GC, CpG, bStatistic, priPhCons, mamPhCons, verPhCons, priPhyloP, mamPhyloP, verPhyloP, GerpN, GerpS, PHRED, SIFTcat_deleterious, SIFTcat_tolerated, SIFTval, PolyPhenCat_benign, PolyPhenCat_possibly_damaging, PolyPhenCat_probably_damaging, PolyPhenCat_unknown, PolyPhenVal, dist_to_tss, pvalue, N2pair)
+
+# save version with common features
+write.table(x = afr_df, row.names = FALSE, quote = FALSE, file = afr_data_common)
+
+```
+
+plotting function
+```{R plot_function}
+
+plot_watershed_GAM <- function(evaOutput, top_title=NULL){
+RIVER_plotdata <- data.frame(spec=evaOutput[["auc"]][[1]][["evaROC"]][["watershed_spec"]],
+                             sens=evaOutput[["auc"]][[1]][["evaROC"]][["watershed_sens"]])
+GAM_plotdata <- data.frame(spec=evaOutput[["auc"]][[1]][["evaROC"]][["GAM_spec"]],
+                           sens=evaOutput[["auc"]][[1]][["evaROC"]][["GAM_sens"]])
+
+subtitle_text=paste("AUC: RIVER = ",round(evaOutput[["auc"]][[1]][["evaROC"]][["watershed_auc"]],3),
+                 ", GAM = ", round(evaOutput[["auc"]][[1]][["evaROC"]][["GAM_auc"]],3),sep="")
+g <- ggplot() +
+  geom_line(aes(color="GAM",x=1-spec,y=sens),data=GAM_plotdata) +
+  geom_line(aes(color="RIVER",x=1-spec,y=sens),data=RIVER_plotdata) +
+  xlab("False Positive Rate") +
+  ylab('True Positive Rate') +
+  geom_abline(color="grey",slope = 1,intercept = 0) +
+  ggtitle(label = top_title,subtitle = subtitle_text) +
+  labs(colour = "Model")
+return(g)
+}
+```
+
+Evaluate RIVER
+```{bash evaluate_river_watershed}
+# European all features
+euro_all="/scratch/groups/abattle4/victor/GTExV8_RareVariationData/RIVER/river_input_v8_european_all_06-09-2020.txt"
+Rscript evaluate_watershed.R --input $euro_all --number_dimensions 1 --output_prefix eval_euro_all --model_name RIVER
+
+# European common features
+euro_common="/scratch/groups/abattle4/victor/GTExV8_RareVariationData/RIVER/river_input_v8_european_common_06-09-2020.txt"
+Rscript evaluate_watershed.R --input $euro_common --number_dimensions 1 --output_prefix eval_euro_common --model_name RIVER
+
+# African all features
+afr_all="/scratch/groups/abattle4/victor/GTExV8_RareVariationData/RIVER/river_input_v8_african_all_06-09-2020.txt.txt"
+Rscript evaluate_watershed.R --input $afr_all --number_dimensions 1 --output_prefix eval_afr_all --model_name RIVER
+
+# African common features
+afr_common="/scratch/groups/abattle4/victor/GTExV8_RareVariationData/RIVER/river_input_v8_african_common_06-09-2020.txt"
+Rscript evaluate_watershed.R --input $afr_common --number_dimensions 1 --output_prefix eval_afr_common --model_name RIVER
+
+```
+
+
+```{r plot_river_watershed}
+
+eval_euro_all <- readRDS("/scratch/groups/abattle4/victor/GTExV8_RareVariationData/RIVER/eval_euro_all_evaluation_object.rds")
+plot_watershed_GAM(eval_euro_all, top_title="European All Features")
+
+eval_euro_common <- readRDS("/scratch/groups/abattle4/victor/GTExV8_RareVariationData/RIVER/eval_euro_common_evaluation_object.rds")
+plot_watershed_GAM(eval_euro_common, top_title="European Common Features")
+
+eval_afr_all <- readRDS("/scratch/groups/abattle4/victor/GTExV8_RareVariationData/RIVER/eval_afr_all_evaluation_object.rds")
+plot_watershed_GAM(eval_afr_all, top_title="African All Features")
+
+eval_afr_common <- readRDS("/scratch/groups/abattle4/victor/GTExV8_RareVariationData/RIVER/eval_afr_common_evaluation_object.rds")
+plot_watershed_GAM(eval_afr_common, top_title="African Common Features")
+```
+
+Look at outliers
+```{r}
+load_watershed_data <- function(input_file, number_of_dimensions, pvalue_fraction, pvalue_threshold) {
+	raw_data <- read.table(input_file, header=TRUE)
+	# Get genomic features (first 2 columns are line identifiers and last (number_of_dimensions+1) columns are outlier status' and N2 pair
+	feat <- raw_data[,3:(ncol(raw_data)-number_of_dimensions-1)]
+	# sample name as SubjectID:GeneName
+	rownames(feat) <- paste(raw_data[,"SubjectID"], ":", raw_data[,"GeneName"],sep="")
+	# Pvalues of outlier status of a particular sample (rows) for a particular outlier type (columns)
+	outlier_pvalues <- as.matrix(raw_data[,(ncol(raw_data)-number_of_dimensions):(ncol(raw_data)-1)])
+	# sample name as SubjectID:GeneName
+	rownames(outlier_pvalues) <- paste(raw_data[,"SubjectID"], ":", raw_data[,"GeneName"],sep="")
+	# Convert outlier status into binary random variables
+	fraction_outliers_binary <- ifelse(abs(outlier_pvalues)<=.1,1,0) # Strictly for initialization of binary output matrix
+	for (dimension_num in 1:number_of_dimensions) {
+		ordered <- sort(abs(outlier_pvalues[,dimension_num]))
+		max_val <- ordered[floor(length(ordered)*pvalue_fraction)]
+		fraction_outliers_binary[,dimension_num] <- ifelse(abs(outlier_pvalues[,dimension_num])<=max_val,1,0)
+	}
+  	outliers_binary <- ifelse(abs(outlier_pvalues)<=pvalue_threshold,1,0)
+	# Convert outlier status into discretized random variables
+	outliers_discrete <- get_discretized_outliers(outlier_pvalues)
+	# Extract array of N2 pairs
+	N2_pairs=factor(raw_data[,"N2pair"], levels=unique(raw_data[,"N2pair"]))
+	# Put all data into compact data structure
+	data_input <- list(feat=as.matrix(feat), outlier_pvalues=as.matrix(outlier_pvalues),outliers_binary=as.matrix(outliers_binary), fraction_outliers_binary=as.matrix(fraction_outliers_binary),outliers_discrete=outliers_discrete, N2_pairs=N2_pairs)
+	return(data_input)
+}
+
+data <- load_watershed_data(euro_data_all, 1, 0.1, 0.1)
 ```
