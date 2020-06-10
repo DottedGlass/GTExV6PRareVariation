@@ -312,6 +312,22 @@ posterior %>% #filter(key=="count_0.5") %>%
 ggplot(euro_posterior) + geom_histogram(aes(x=count_0.5))
 ```
 
+# posterior scores on afr_common based on model trained on euro_common
+```{r}
+# load euro_common model
+load("/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_model_european_common_05-21-2020.RData")
+
+# get posteriors
+dataInput_afr_common <- getData("/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_input_v8_african_common_05-21-2020.txt")
+Feat <- t(Biobase::exprs(dataInput_afr_common)) # genomic features (G)
+Out <- as.numeric(unlist(dataInput_afr_common$Outlier))-1 # outlier status (E)
+post <- testPosteriors(Feat, Out, model_euro_common[["fitRIVER"]])
+save(post, file = "/scratch/groups/abattle4/victor/GTExV8_RareVariationData/RIVER/post.Rdata")
+# boxplot
+
+```
+
+
 # RIVER with Watershed
 https://github.com/BennyStrobes/Watershed
 
@@ -394,7 +410,7 @@ write.table(x = afr_df, row.names = FALSE, quote = FALSE, file = afr_data_common
 plotting function
 ```{R plot_function}
 
-plot_watershed_GAM <- function(evaOutput, top_title=NULL){
+plot_ROC <- function(evaOutput, top_title=NULL){
 RIVER_plotdata <- data.frame(spec=evaOutput[["auc"]][[1]][["evaROC"]][["watershed_spec"]],
                              sens=evaOutput[["auc"]][[1]][["evaROC"]][["watershed_sens"]])
 GAM_plotdata <- data.frame(spec=evaOutput[["auc"]][[1]][["evaROC"]][["GAM_spec"]],
@@ -408,6 +424,24 @@ g <- ggplot() +
   xlab("False Positive Rate") +
   ylab('True Positive Rate') +
   geom_abline(color="grey",slope = 1,intercept = 0) +
+  ggtitle(label = top_title,subtitle = subtitle_text) +
+  labs(colour = "Model")
+return(g)
+}
+
+plot_pre_recall <- function(evaOutput, top_title=NULL){
+RIVER_plotdata <- data.frame(precision=evaOutput[["auc"]][[1]][["evaROC"]][["watershed_precision"]],
+                             recall=evaOutput[["auc"]][[1]][["evaROC"]][["watershed_recall"]])
+GAM_plotdata <- data.frame(precision=evaOutput[["auc"]][[1]][["evaROC"]][["GAM_precision"]],
+                           recall=evaOutput[["auc"]][[1]][["evaROC"]][["GAM_recall"]])
+
+subtitle_text=paste("AUC: RIVER = ",round(evaOutput[["auc"]][[1]][["evaROC"]][["watershed_auc"]],3),
+                 ", GAM = ", round(evaOutput[["auc"]][[1]][["evaROC"]][["GAM_auc"]],3),sep="")
+g <- ggplot() +
+  geom_line(aes(color="GAM",x=recall,y=precision),data=GAM_plotdata) +
+  geom_line(aes(color="RIVER",x=recall,y=precision),data=RIVER_plotdata) +
+  xlab("Recall") +
+  ylab('Precision') +
   ggtitle(label = top_title,subtitle = subtitle_text) +
   labs(colour = "Model")
 return(g)
@@ -438,16 +472,16 @@ Rscript evaluate_watershed.R --input $afr_common --number_dimensions 1 --output_
 ```{r plot_river_watershed}
 
 eval_euro_all <- readRDS("/scratch/groups/abattle4/victor/GTExV8_RareVariationData/RIVER/eval_euro_all_evaluation_object.rds")
-plot_watershed_GAM(eval_euro_all, top_title="European All Features")
+plot_pre_recall(eval_euro_all, top_title="European All Features")
 
 eval_euro_common <- readRDS("/scratch/groups/abattle4/victor/GTExV8_RareVariationData/RIVER/eval_euro_common_evaluation_object.rds")
-plot_watershed_GAM(eval_euro_common, top_title="European Common Features")
+plot_pre_recall(eval_euro_common, top_title="European Common Features")
 
 eval_afr_all <- readRDS("/scratch/groups/abattle4/victor/GTExV8_RareVariationData/RIVER/eval_afr_all_evaluation_object.rds")
-plot_watershed_GAM(eval_afr_all, top_title="African All Features")
+plot_pre_recall(eval_afr_all, top_title="African All Features")
 
 eval_afr_common <- readRDS("/scratch/groups/abattle4/victor/GTExV8_RareVariationData/RIVER/eval_afr_common_evaluation_object.rds")
-plot_watershed_GAM(eval_afr_common, top_title="African Common Features")
+plot_pre_recall(eval_afr_common, top_title="African Common Features")
 ```
 
 Look at outliers
