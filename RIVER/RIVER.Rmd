@@ -323,7 +323,28 @@ Feat <- t(Biobase::exprs(dataInput_afr_common)) # genomic features (G)
 Out <- as.numeric(unlist(dataInput_afr_common$Outlier))-1 # outlier status (E)
 post <- testPosteriors(Feat, Out, model_euro_common[["fitRIVER"]])
 save(post, file = "/scratch/groups/abattle4/victor/GTExV8_RareVariationData/RIVER/post.Rdata")
+
 # boxplot
+
+afr_trained_euro <- read.table("/scratch/groups/abattle4/victor/GTExV6PRareVariationData/data/RIVER/river_input_v8_african_common_05-21-2020.txt",header=TRUE) %>%
+  select(SubjectID,GeneName) %>%
+  cbind(.,as.data.frame(post$posterior)) %>%
+  rename(indiv=SubjectID,RIVER_posterior=V2) %>%
+  mutate( greater_0.5=RIVER_posterior>0.5, greater_0.9=RIVER_posterior>0.9) %>%
+  group_by(indiv) %>%
+  summarize(count_0.5 = sum(greater_0.5), count_0.9 = sum(greater_0.9)) %>%
+  mutate(ethnicity="AFA Trained on Euro")
+
+posterior <- rbind(euro_posterior, afr_posterior, afr_trained_euro)
+posterior <- posterior %>% gather(key=key,value=value,-indiv,-ethnicity)
+posterior$type <- "RIVER"
+
+
+posterior  %>%
+ggplot() + geom_boxplot(aes(x=key,y=value,col=ethnicity))+
+  facet_wrap(key ~.,scales="free",labeller = facet_labeller, strip.position="bottom") +
+  ylab('Number of Individuals with RIVER \nposterior scores above threshold') +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
 
 ```
 
