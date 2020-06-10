@@ -295,7 +295,8 @@ posterior  %>%
 ggplot() + geom_boxplot(aes(x=key,y=value,col=ethnicity))+
   facet_wrap(key ~.,scales="free",labeller = facet_labeller, strip.position="bottom") +
   ylab('Number of Individuals with RIVER \nposterior scores above threshold') +
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  scale_y_continuous(breaks=scales::pretty_breaks())
 ```
 ```{r}
 # RIVER histograms
@@ -344,7 +345,8 @@ posterior  %>%
 ggplot() + geom_boxplot(aes(x=key,y=value,col=ethnicity))+
   facet_wrap(key ~.,scales="free",labeller = facet_labeller, strip.position="bottom") +
   ylab('Number of Individuals with RIVER \nposterior scores above threshold') +
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) +
+  scale_y_continuous(breaks= scales::pretty_breaks())
 
 ```
 
