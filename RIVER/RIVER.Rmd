@@ -349,7 +349,13 @@ ggplot() + geom_boxplot(aes(x=key,y=value,col=ethnicity))+
   scale_y_continuous(breaks= scales::pretty_breaks())
 
 ```
+```{r wilcoxon, cache=TRUE, eval=FALSE}
 
+for_wrs <- rbind(euro_posterior, afr_posterior) %>% gather(key=key,value=value,-indiv,-ethnicity) %>%
+  filter(key=="count_0.5")
+
+wilcox.test(for_wrs$value[for_wrs$ethnicity == "European"],for_wrs$value[for_wrs$ethnicity == "African American"])
+```
 
 # RIVER with Watershed
 https://github.com/BennyStrobes/Watershed
