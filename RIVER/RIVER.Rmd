@@ -479,21 +479,22 @@ return(g)
 
 Evaluate RIVER
 ```{bash evaluate_river_watershed}
+watershed_dir=/scratch/groups/abattle4/jessica/RareVar_AFR/Watershed
 # European all features
 euro_all="/scratch/groups/abattle4/victor/GTExV8_RareVariationData/RIVER/river_input_v8_european_all_06-09-2020.txt"
-Rscript evaluate_watershed.R --input $euro_all --number_dimensions 1 --output_prefix eval_euro_all --model_name RIVER
+Rscript ${watershed_dir}/evaluate_watershed.R --input $euro_all --number_dimensions 1 --output_prefix "eval_euro_all" --model_name RIVER --dirichlet_prior_parameter 30 --l2_prior_parameter .001 --n2_pair_pvalue_fraction .01 --binary_pvalue_threshold .01
 
 # European common features
 euro_common="/scratch/groups/abattle4/victor/GTExV8_RareVariationData/RIVER/river_input_v8_european_common_06-09-2020.txt"
-Rscript evaluate_watershed.R --input $euro_common --number_dimensions 1 --output_prefix eval_euro_common --model_name RIVER
+Rscript ${watershed_dir}/evaluate_watershed.R --input $euro_common --number_dimensions 1 --output_prefix eval_euro_common --model_name RIVER --dirichlet_prior_parameter 30 --l2_prior_parameter .001 --n2_pair_pvalue_fraction .01 --binary_pvalue_threshold .01
 
 # African all features
 afr_all="/scratch/groups/abattle4/victor/GTExV8_RareVariationData/RIVER/river_input_v8_african_all_06-09-2020.txt.txt"
-Rscript evaluate_watershed.R --input $afr_all --number_dimensions 1 --output_prefix eval_afr_all --model_name RIVER
+Rscript ${watershed_dir}/evaluate_watershed.R --input $afr_all --number_dimensions 1 --output_prefix eval_afr_all --model_name RIVER --dirichlet_prior_parameter 30 --l2_prior_parameter .001 --n2_pair_pvalue_fraction .01 --binary_pvalue_threshold .01
 
 # African common features
 afr_common="/scratch/groups/abattle4/victor/GTExV8_RareVariationData/RIVER/river_input_v8_african_common_06-09-2020.txt"
-Rscript evaluate_watershed.R --input $afr_common --number_dimensions 1 --output_prefix eval_afr_common --model_name RIVER
+Rscript ${watershed_dir}/evaluate_watershed.R --input $afr_common --number_dimensions 1 --output_prefix eval_afr_common --model_name RIVER --dirichlet_prior_parameter 30 --l2_prior_parameter .001 --n2_pair_pvalue_fraction .01 --binary_pvalue_threshold .01
 
 ```
 
