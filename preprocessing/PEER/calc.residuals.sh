@@ -7,7 +7,7 @@ PEER_DIR=${RAREVARDIR}/preprocessing/PEER
 # Function to compute residuals for given tissue
 residCalculator(){
 	line=${1}
-	RPKM=${PEER_DIR}/${line}.rpkm.log2.ztrans.txt
+	RPKM=${PEER_DIR}/${line}.tpm.log2.ztrans.txt
 	Covariates=${RAREVARDIR}/data/covariates/${line}_Analysis.covariates.txt
 	Peer=${PEER_DIR}/${line}_Factors*/factors.tsv
 	OUT=${PEER_DIR}/${line}.peer.ztrans.txt
@@ -17,4 +17,4 @@ residCalculator(){
 # Run above function for each tissue in parallel
 # Requesting 10 cores
 export -f residCalculator
-for line in `cat preprocessing/PEER/gtex_eqtl_tissues.txt`; do echo $line; done | parallel --jobs 10 residCalculator {1}
+for line in `cat $RAREVARDIR/reference/gtex_v8_tissues_all_normalized_samples.txt`; do echo $line; done | parallel --jobs 4 residCalculator {1}

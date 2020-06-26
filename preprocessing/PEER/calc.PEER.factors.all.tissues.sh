@@ -11,4 +11,4 @@ factorCalculator(){
 # Calculate PEER factors for each tissue
 # Run in parallel requesting 10 cores
 export -f factorCalculator
-for line in $(cat preprocessing/PEER/gtex_eqtl_tissues.txt); do echo $line; done | parallel --jobs 10 factorCalculator {1}
+for line in $(cat ${RAREVARDIR}/reference/gtex_v8_tissues_all_normalized_samples.txt); do echo $line; done | parallel --jobs 4 factorCalculator {1}

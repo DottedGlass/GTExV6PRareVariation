@@ -4,6 +4,36 @@ output:
   html_document:
     df_print: paged
 ---
+## Install the dependencies
+R packages
+* cowplot
+* data.table
+* doMC
+* ggplot2
+* matrixStats
+* peer
+* plotrix
+* plyr
+* pROC
+* RColorBrewer
+* reshape2
+* scales
+
+Python modules
+* numpy
+* pybedtools
+* pysam
+* scipy
+
+Unix packages
+* GNU parallel
+* tabix
+
+External software
+* bedtools v2.26.0 or later
+* vcftools
+
+
 
 ## Setup
 Add the following to .bashrc
@@ -80,6 +110,12 @@ tar -xzvf ${RAREVARDIR}/data/GTEx/GTEx_Analysis_v8_eQTL_covariates.tar.gz -C ${R
 # GTEx_Analysis_v8_eQTL.tar
 wget -P ${RAREVARDIR}/data/GTEx https://storage.googleapis.com/gtex_analysis_v8/single_tissue_qtl_data/GTEx_Analysis_v8_eQTL.tar
 tar -xvf ${RAREVARDIR}/data/GTEx/GTEx_Analysis_v8_eQTL.tar -C ${RAREVARDIR}/data/GTEx
+
+# convert "c-1" files in eQTL folder into "c1"
+for f in ${RAREVARDIR}/data/GTEx/GTEx_Analysis_v8_eQTL/*c-1*; do mv "$f" "$(echo "$f" | sed s/c-1/c1/)"; done
+
+# convert "c-1" files in eQTL_covariates folder into "c1"
+for f in ${RAREVARDIR}/data/GTEx/GTEx_Analysis_v8_eQTL_covariates/*c-1*; do mv "$f" "$(echo "$f" | sed s/c-1/c1/)"; done
 
 ```
 
@@ -205,17 +241,17 @@ awk '($3=="AFR"){print $1}' ${RAREVARDIR}/data/1KG/integrated_call_samples_v3.20
 ```{bash tpkm_read_count, eval=FALSE, cache=TRUE}
 cat ${RAREVARDIR}/data/GTEx/GTEx_Analysis_2017-06-05_v8_Annotations_SampleAttributesDS.txt | \
 	cut -f1,14 | sed 's/ - /_/' | sed 's/ /_/g' | sed 's/(//' | sed 's/)//' | sed 's/c-1/c1/' | grep -v NA12878 > \
-	${RAREVARDIR}/preprocessing/gtex_v8_samples_tissues.txt
+	${RAREVARDIR}/reference/gtex_v8_samples_tissues.txt
 
 python preprocessing/split_by_tissues.py \
     --GTEX ${RAREVARDIR}/data/GTEx/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_tpm.gct \
-    --SAMPLE ${RAREVARDIR}/preprocessing/gtex_v8_samples_tissues.txt \
+    --SAMPLE ${RAREVARDIR}/reference/gtex_v8_samples_tissues.txt \
     --OUT ${RAREVARDIR}/preprocessing/PEER \
     --END .tpm.txt
 
 python preprocessing/split_by_tissues.py \
     --GTEX ${RAREVARDIR}/data/GTEx/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_reads.gct \
-    --SAMPLE ${RAREVARDIR}/preprocessing/gtex_v8_samples_tissues.txt \
+    --SAMPLE ${RAREVARDIR}/reference/gtex_v8_samples_tissues.txt \
     --OUT ${RAREVARDIR}/preprocessing/PEER \
     --END .reads.txt
 ```
@@ -225,26 +261,30 @@ python preprocessing/split_by_tissues.py \
 specified by `parallel --jobs 10` in the scripts `preprocessing/PEER/calc.PEER.factors.all.tissues.sh` and <br>
 `preprocessing/PEER/calc.residuals.sh`)
 ```{bash peer_correction, eval=FALSE, cache=TRUE}
+# Make list of tissues
+ls ${RAREVARDIR}/data/GTEx/GTEx_Analysis_v8_eQTL_covariates | cut -d "." -f1 > ${RAREVARDIR}/reference/gtex_v8_tissues_all_normalized_samples.txt
+
+# Run PEER pipeline
 bash preprocessing/PEER/PEER.pipeline.sh
 ```
 
-Obtain gene expression data that is corrected and normalized from Nicole. This data was saved to `$RAREVARDIR/preprocessing/PEER_nicole`
-```{bash nicole_data, eval=FALSE, cache=TRUE}
-mkdir ${RAREVARDIR}/preprocessing/PEER_nicole
-cp /work-zfs/abattle4/bstrober/rare_variant/gtex_v8/splicing/unsupervised_modeling/unsupervised_learning_input/total_expression_data_from_nicole/* ${RAREVARDIR}/preprocessing/PEER_nicole/.
-```
+<!-- Obtain gene expression data that is corrected and normalized from Nicole. This data was saved to `$RAREVARDIR/preprocessing/PEER_nicole` -->
+<!-- ```{bash nicole_data, eval=FALSE, cache=TRUE} -->
+<!-- mkdir ${RAREVARDIR}/preprocessing/PEER_nicole -->
+<!-- cp /work-zfs/abattle4/bstrober/rare_variant/gtex_v8/splicing/unsupervised_modeling/unsupervised_learning_input/total_expression_data_from_nicole/* ${RAREVARDIR}/preprocessing/PEER_nicole/. -->
+<!-- ``` -->
 
 
-Convert the expression data table from long to wide.
-```{bash long_to_wide, eval=FALSE, cache=TRUE}
-infolder=$RAREVARDIR/preprocessing/PEER_nicole
-outfolder=$RAREVARDIR/preprocessing/PEER
-for file in $(ls ${infolder}/*globalOutliers.v8ciseqtls.removed.outlierGenes.zscores.txt); do
-base=$(basename $file)
-echo ${file}
-Rscript --vanilla preprocessing/long_to_wide_exprbytissue.R ${file} ${outfolder}/${base}
-done
-```
+<!-- Convert the expression data table from long to wide. -->
+<!-- ```{bash long_to_wide, eval=FALSE, cache=TRUE} -->
+<!-- infolder=$RAREVARDIR/preprocessing/PEER_nicole -->
+<!-- outfolder=$RAREVARDIR/preprocessing/PEER -->
+<!-- for file in $(ls ${infolder}/*globalOutliers.v8ciseqtls.removed.outlierGenes.zscores.txt); do -->
+<!-- base=$(basename $file) -->
+<!-- echo ${file} -->
+<!-- Rscript --vanilla preprocessing/long_to_wide_exprbytissue.R ${file} ${outfolder}/${base} -->
+<!-- done -->
+<!-- ``` -->
 
 ### Make list of individuals
 Make list of all individuals from GTEx v8. Make list of all individuals with reported African American ancestry and European ancestry.
@@ -282,11 +322,11 @@ cat ${RAREVARDIR}/data/GTEx/GTEx_Analysis_2017-06-05_v8_Annotations_SubjectPheno
 awk 'NR==FNR { lines[$0]=1; next } $0 in lines' ${RAREVARDIR}/reference/gtex_v8_wgs_individuals.txt ${RAREVARDIR}/reference/gtex_v8_individuals_EUR.txt > ${RAREVARDIR}/reference/gtex_v8_wgs_individuals_EUR.txt
 ```
 
-### Make list of tissues (based on Nicole's data)
-```{bash , eval=FALSE, cache=TRUE}
-ls ${RAREVARDIR}/preprocessing/PEER | cut -d. -f1 \
-> ${RAREVARDIR}/reference/gtex_v8_tissues_all_normalized_samples.txt
-```
+<!-- ### Make list of tissues (based on Nicole's data) -->
+<!-- ```{bash , eval=FALSE, cache=TRUE} -->
+<!-- ls ${RAREVARDIR}/preprocessing/PEER | cut -d. -f1 \ -->
+<!-- > ${RAREVARDIR}/reference/gtex_v8_tissues_all_normalized_samples.txt -->
+<!-- ``` -->
 
 ### Make flat files from normalized data
 ```{bash, eval=FALSE, cache=TRUE}

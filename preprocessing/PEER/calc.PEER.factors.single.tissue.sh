@@ -2,8 +2,8 @@
 
 set -o nounset -o errexit -o pipefail
 
-TraitsFileName=${PEER_DIR}/${1}.rpkm.log2.ztrans.txt
-CovsFileName=${RAREVARDIR}/data/covariates/${1}_Analysis.covariates.txt
+TraitsFileName=${PEER_DIR}/${1}.tpm.log2.ztrans.txt
+CovsFileName=${RAREVARDIR}/data/GTEx/GTEx_Analysis_v8_eQTL_covariates/${1}.v8.covariates.txt
 MaxFactorsN=$(grep InferredCov ${CovsFileName} | wc -l)
 MaxIterations=10000
 BoundTol=0.001

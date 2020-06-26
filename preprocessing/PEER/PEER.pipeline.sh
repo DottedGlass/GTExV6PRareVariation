@@ -6,7 +6,7 @@ set -o nounset -o errexit -o pipefail
 export PEER_DIR=${RAREVARDIR}/preprocessing/PEER
 
 # Make RPKM and read count matrices for each tissue
-R CMD BATCH --no-save preprocessing/PEER/preprocess.expr.data.R &>${RAREVARDIR}/logs/preprocess.expr.data.log
+Rscript preprocessing/PEER/preprocess.expr.data.R
 
 # Estimate PEER factors
 bash preprocessing/PEER/calc.PEER.factors.all.tissues.sh
