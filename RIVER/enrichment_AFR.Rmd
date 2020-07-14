@@ -41,7 +41,7 @@ afr_indiv_file <- '/scratch/groups/abattle4/victor/GTExV8_RareVariationData/refe
 # read in files needed
 z_scores <- read.table(z_scores_file, header=TRUE, check.names = FALSE) # wide table with z scores for gene-individual pairs
 rare_var_pairs <- read.table(rare_var_pairs_file, header=TRUE, check.names = FALSE) # table of gene-individual pairs with their rare variants
-afr_list <- read.table(afr_indiv_file) # list of African American individuals with WGS
+afr_indiv <- read.table(afr_indiv_file)$V1 # list of African American individuals with WGS
 
 # convert to long table with three columns: gene, individual, zscore
 gene_list <- colnames(z_scores)[-1]
@@ -51,20 +51,25 @@ pairs_df <- gather_(z_scores, key="indiv", value="zscore", gene_list)
 pairs_df <- drop_na(pairs_df, zscore)
 
 # filter for African individuals only
-keep_bool <- rep(FALSE, nrow(pairs_df))
-for (i in seq(1,nrow(pairs_df))) {
-  
-  if (pairs_df$indiv[i] %in% afr_list$V1) {
-    keep_bool[i] <- TRUE
-  }
-}
-pairs_df <- pairs_df[keep_bool,]
+pairs_df <- pairs_df %>% filter(indiv %in% afr_indiv)
 
-# add 4th column to pairs_df which indicates if the given gene-individual pair has at least 1 rare variant within 10kb of gene TSS
-pairs_df$has_rare_var <- 
+# add column to pairs_df which indicates if the given gene-individual pair has at least 1 rare variant within 10kb of gene TSS
+rare_var_pairs$easykey <- paste0(rare_var_pairs$gene,rare_var_pairs$indiv)
+pairs_df$easykey <- paste0(pairs_df$gene,pairs_df$indiv)
+pairs_df$has_rare <- ifelse(pairs_df$easykey %in% rare_var_pairs$easykey,1,0)
 
 # compute enrichment
 zscore_thresh_list <- seq(1,10)
+for (thresh in zscore_thresh_list) {
+  pairs_df[[paste0("outlier_status_at_thresh_",thresh)]] <- ifelse(pairs_df$z_score > thresh, 1,0)
+}
+
+# build frequency table to count inliers and outliers with rare variants
+summarize_if(contains("thresh",n())
+
+# build frequency table to count inliers and outliers (with or without rare variants)
+
+
 
 calc_enrichment <- function(pairs_df, outlier_status) {
   # compute numerator - ratio of # of outlier Afr gene-indiv with nearby rare variant to # of outlier Afr gene-indiv pairs
@@ -75,9 +80,5 @@ calc_enrichment <- function(pairs_df, outlier_status) {
   
 }
 
-get_enrichment_scores <- function(pairs_df,zscore_thresh_list){
-  # compute outlier status of the gene-individual pair at z score thresh 1,2,3,...
-  
-}
 
 ```
