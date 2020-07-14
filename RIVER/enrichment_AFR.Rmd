@@ -1,0 +1,83 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    pairs_df_print: paged
+---
+
+```{r}
+library(data.table)
+
+# files needed
+gene_indiv_var_file = '/scratch/groups/abattle4/victor/GTExV6PRareVariationData/archive/reference/gene_indiv_variants.txt'
+z_scores_file <- '/scratch/groups/abattle4/victor/GTExV6PRareVariationData/archive/data/v8/outliers_medz_zscores.txt'
+
+# load gene-individual pairs with rare variants and zscore look up table
+gene_indiv_var = read.table(gene_indiv_var_file, header=TRUE, check.names = FALSE)
+z_scores <- read.table(z_scores_file, header=TRUE, check.names = FALSE)
+
+# look up z scores
+zscore_table <- z_scores %>% gather(key="SubjectID",value="Zscore",-GENE) %>% rename(GeneName=GENE)
+zscore_table <- as.data.table(zscore_table)
+setkey(zscore_table,GeneName,SubjectID)
+
+zscore_list <- vector("numeric",nrow(afr_pairs_df))
+for (i in seq(nrow(afr_pairs_df))) {
+  subject <- as.character(afr_pairs_df[i,2])
+  gene <- as.character(afr_pairs_df[i,1])
+  zscore_list[i] <- zscore_table[.(gene,subject)]$Zscore
+}
+```
+
+```{r}
+library(tidyr)
+library(data.table)
+
+# files needed
+z_scores_file <- '/scratch/groups/abattle4/victor/GTExV6PRareVariationData/archive/data/v8/outliers_medz_zscores.txt'
+rare_var_pairs_file <- '/scratch/groups/abattle4/victor/GTExV6PRareVariationData/archive/reference/gene_indiv_variants.txt'
+afr_indiv_file <- '/scratch/groups/abattle4/victor/GTExV8_RareVariationData/reference/gtex_v8_wgs_individuals_AFA.txt'
+
+# read in files needed
+z_scores <- read.table(z_scores_file, header=TRUE, check.names = FALSE) # wide table with z scores for gene-individual pairs
+rare_var_pairs <- read.table(rare_var_pairs_file, header=TRUE, check.names = FALSE) # table of gene-individual pairs with their rare variants
+afr_list <- read.table(afr_indiv_file) # list of African American individuals with WGS
+
+# convert to long table with three columns: gene, individual, zscore
+gene_list <- colnames(z_scores)[-1]
+pairs_df <- gather_(z_scores, key="indiv", value="zscore", gene_list)
+
+# remove gene-individuals with NA zscores
+pairs_df <- drop_na(pairs_df, zscore)
+
+# filter for African individuals only
+keep_bool <- rep(FALSE, nrow(pairs_df))
+for (i in seq(1,nrow(pairs_df))) {
+  
+  if (pairs_df$indiv[i] %in% afr_list$V1) {
+    keep_bool[i] <- TRUE
+  }
+}
+pairs_df <- pairs_df[keep_bool,]
+
+# add 4th column to pairs_df which indicates if the given gene-individual pair has at least 1 rare variant within 10kb of gene TSS
+pairs_df$has_rare_var <- 
+
+# compute enrichment
+zscore_thresh_list <- seq(1,10)
+
+calc_enrichment <- function(pairs_df, outlier_status) {
+  # compute numerator - ratio of # of outlier Afr gene-indiv with nearby rare variant to # of outlier Afr gene-indiv pairs
+  # subet pairs_df for outliers
+  pairs_df_outliers <- pairs_df[outlier_status,]
+    
+  # compute denominator - ratio of # of inlier Afr gene-indiv with nearby rare variant to # of inlier Afr gene-indiv pairs
+  
+}
+
+get_enrichment_scores <- function(pairs_df,zscore_thresh_list){
+  # compute outlier status of the gene-individual pair at z score thresh 1,2,3,...
+  
+}
+
+```
