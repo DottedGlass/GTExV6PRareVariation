@@ -73,7 +73,13 @@ count_table <-
     pivot_wider(names_from=thresh, values_from=n)
 
 # build frequency table to count inliers and outliers (with or without rare variants)
-
+rare_count_table <- 
+    pairs_df %>%
+    filter(has_rare == 1) %>%
+    gather(contains("thresh"), key=thresh,value=outlier) # make a longer table %>%
+    group_by(thresh) %>%
+    count(outlier) %>%
+    pivot_wider(names_from=thresh, values_from=n)
 
 
 calc_enrichment <- function(pairs_df, outlier_status) {
