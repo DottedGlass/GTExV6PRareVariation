@@ -61,25 +61,29 @@ pairs_df$has_rare <- ifelse(pairs_df$easykey %in% rare_var_pairs$easykey,1,0)
 # compute enrichment
 zscore_thresh_list <- seq(1,10)
 for (thresh in zscore_thresh_list) {
-  pairs_df[[paste0("outlier_status_at_thresh_",thresh)]] <- ifelse(pairs_df$z_score > thresh, 1,0)
+  pairs_df[[paste0("outlier_status_at_thresh_",thresh)]] <- ifelse(pairs_df$z_score > thresh, "outlier","inlier")
 }
 
-# build frequency table to count inliers and outliers with rare variants
+# build frequency table to count inliers and outliers with or without rare variants
 count_table <-
     pairs_df %>% 
     gather(contains("thresh"), key=thresh,value=outlier) # make a longer table %>% 
     group_by(thresh) %>%
     count(outlier) %>%
-    pivot_wider(names_from=thresh, values_from=n)
+    pivot_wider(names_from=outlier,values_from=n) %>% 
+    rename(outlier_all_pairs=outlier, inlier_all_pairs=inlier)
 
-# build frequency table to count inliers and outliers (with or without rare variants)
+# build frequency table to count inliers and outliers (with  rare variants)
 rare_count_table <- 
     pairs_df %>%
     filter(has_rare == 1) %>%
     gather(contains("thresh"), key=thresh,value=outlier) # make a longer table %>%
     group_by(thresh) %>%
     count(outlier) %>%
-    pivot_wider(names_from=thresh, values_from=n)
+    pivot_wider(names_from=outlier,values_from=n) %>% 
+    rename(outlier_rare_pairs=outlier, inlier_rare_pairs=inlier) 
+
+combined_counts <- merge(count_table,rare_count_table,by="thresh",all=T)
 
 
 calc_enrichment <- function(pairs_df, outlier_status) {
