@@ -8,6 +8,7 @@ output:
 
 ```{r}
 library(tidyr)
+library(dplyr)
 library(data.table)
 
 # files needed
@@ -28,24 +29,23 @@ pairs_df <- gather_(z_scores, key="indiv", value="zscore", gene_list)
 pairs_df <- drop_na(pairs_df, zscore)
 
 # filter for African individuals only
-# pairs_df <- pairs_df %>% filter(indiv %in% afr_indiv)
 pairs_df <- filter(pairs_df, (indiv %in% afr_indiv))
 
 # add column to pairs_df which indicates if the given gene-individual pair has at least 1 rare variant within 10kb of gene TSS
-rare_var_pairs$easykey <- paste0(rare_var_pairs$gene,rare_var_pairs$indiv)
-pairs_df$easykey <- paste0(pairs_df$gene,pairs_df$indiv)
+rare_var_pairs$easykey <- paste0(rare_var_pairs$gene,rare_var_pairs$individual)
+pairs_df$easykey <- paste0(pairs_df$GENE,pairs_df$indiv)
 pairs_df$has_rare <- ifelse(pairs_df$easykey %in% rare_var_pairs$easykey,1,0)
 
 # compute enrichment
 zscore_thresh_list <- seq(1,10)
 for (thresh in zscore_thresh_list) {
-  pairs_df[[paste0("outlier_status_at_thresh_",thresh)]] <- ifelse(pairs_df$z_score > thresh, "outlier","inlier")
+  pairs_df[[paste0("outlier_status_at_thresh_",thresh)]] <- ifelse(pairs_df$zscore > thresh, "outlier","inlier")
 }
 
 # build frequency table to count inliers and outliers with or without rare variants
 count_table <-
     pairs_df %>% 
-    gather(contains("thresh"), key=thresh,value=outlier) # make a longer table %>% 
+    gather(contains("thresh"), key=thresh,value=outlier) %>% # make table longer 
     group_by(thresh) %>%
     count(outlier) %>%
     pivot_wider(names_from=outlier,values_from=n) %>% 
@@ -55,7 +55,7 @@ count_table <-
 rare_count_table <- 
     pairs_df %>%
     filter(has_rare == 1) %>%
-    gather(contains("thresh"), key=thresh,value=outlier) # make a longer table %>%
+    gather(contains("thresh"), key=thresh,value=outlier) %>% # make a longer table
     group_by(thresh) %>%
     count(outlier) %>%
     pivot_wider(names_from=outlier,values_from=n) %>% 
@@ -63,15 +63,10 @@ rare_count_table <-
 
 enrichment.df  <- merge(count_table,rare_count_table,by="thresh",all=T) %>% mutate(numerator=outlier_rare_pairs/outlier_all_pairs, denominator=inlier_rare_pairs/inlier_all_pairs, enrichment=numerator/denominator)
 
+enrichment.df$sortcol <- as.numeric(gsub("outlier_status_at_thresh_", "", enrichment.df$thresh))
+enrichment.df <- arrange(enrichment.df, sortcol)
 
-calc_enrichment <- function(pairs_df, outlier_status) {
-  # compute numerator - ratio of # of outlier Afr gene-indiv with nearby rare variant to # of outlier Afr gene-indiv pairs
-  # subet pairs_df for outliers
-  pairs_df_outliers <- pairs_df[outlier_status,]
-    
-  # compute denominator - ratio of # of inlier Afr gene-indiv with nearby rare variant to # of inlier Afr gene-indiv pairs
-  
-}
-
+plot(x = enrichment.df$sortcol, y = enrichment.df$enrichment)
+## to-do: add confidence intervals
 
 ```
