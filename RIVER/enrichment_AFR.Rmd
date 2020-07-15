@@ -7,6 +7,7 @@ output:
 
 ```{r}
 library(data.table)
+library(dplyr)
 
 # files needed
 gene_indiv_var_file = '/scratch/groups/abattle4/victor/GTExV6PRareVariationData/archive/reference/gene_indiv_variants.txt'
@@ -83,7 +84,7 @@ rare_count_table <-
     pivot_wider(names_from=outlier,values_from=n) %>% 
     rename(outlier_rare_pairs=outlier, inlier_rare_pairs=inlier) 
 
-combined_counts <- merge(count_table,rare_count_table,by="thresh",all=T)
+enrichment.df  <- merge(count_table,rare_count_table,by="thresh",all=T) %>% mutate(numerator=outlier_rare_pairs/outlier_all_pairs, denominator=inlier_rare_pairs/inlier_all_pairs, enrichment=numerator/denominator)
 
 
 calc_enrichment <- function(pairs_df, outlier_status) {
