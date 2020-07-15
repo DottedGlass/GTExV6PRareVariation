@@ -42,7 +42,7 @@ afr_indiv_file <- '/scratch/groups/abattle4/victor/GTExV8_RareVariationData/refe
 # read in files needed
 z_scores <- read.table(z_scores_file, header=TRUE, check.names = FALSE) # wide table with z scores for gene-individual pairs
 rare_var_pairs <- read.table(rare_var_pairs_file, header=TRUE, check.names = FALSE) # table of gene-individual pairs with their rare variants
-afr_indiv <- read.table(afr_indiv_file)$V1 # list of African American individuals with WGS
+afr_indiv <- as.character(read.table(afr_indiv_file)$V1) # list of African American individuals with WGS
 
 # convert to long table with three columns: gene, individual, zscore
 gene_list <- colnames(z_scores)[-1]
@@ -52,7 +52,8 @@ pairs_df <- gather_(z_scores, key="indiv", value="zscore", gene_list)
 pairs_df <- drop_na(pairs_df, zscore)
 
 # filter for African individuals only
-pairs_df <- pairs_df %>% filter(indiv %in% afr_indiv)
+# pairs_df <- pairs_df %>% filter(indiv %in% afr_indiv)
+pairs_df <- filter(pairs_df, (indiv %in% afr_indiv))
 
 # add column to pairs_df which indicates if the given gene-individual pair has at least 1 rare variant within 10kb of gene TSS
 rare_var_pairs$easykey <- paste0(rare_var_pairs$gene,rare_var_pairs$indiv)
