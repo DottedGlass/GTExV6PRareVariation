@@ -65,7 +65,12 @@ for (thresh in zscore_thresh_list) {
 }
 
 # build frequency table to count inliers and outliers with rare variants
-summarize_if(contains("thresh",n())
+count_table <-
+    pairs_df %>% 
+    gather(contains("thresh"), key=thresh,value=outlier) # make a longer table %>% 
+    group_by(thresh) %>%
+    count(outlier) %>%
+    pivot_wider(names_from=thresh, values_from=n)
 
 # build frequency table to count inliers and outliers (with or without rare variants)
 
