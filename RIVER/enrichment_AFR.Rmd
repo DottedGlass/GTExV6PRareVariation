@@ -5,30 +5,6 @@ output:
     pairs_df_print: paged
 ---
 
-```{r}
-library(data.table)
-library(dplyr)
-
-# files needed
-gene_indiv_var_file = '/scratch/groups/abattle4/victor/GTExV6PRareVariationData/archive/reference/gene_indiv_variants.txt'
-z_scores_file <- '/scratch/groups/abattle4/victor/GTExV6PRareVariationData/archive/data/v8/outliers_medz_zscores.txt'
-
-# load gene-individual pairs with rare variants and zscore look up table
-gene_indiv_var = read.table(gene_indiv_var_file, header=TRUE, check.names = FALSE)
-z_scores <- read.table(z_scores_file, header=TRUE, check.names = FALSE)
-
-# look up z scores
-zscore_table <- z_scores %>% gather(key="SubjectID",value="Zscore",-GENE) %>% rename(GeneName=GENE)
-zscore_table <- as.data.table(zscore_table)
-setkey(zscore_table,GeneName,SubjectID)
-
-zscore_list <- vector("numeric",nrow(afr_pairs_df))
-for (i in seq(nrow(afr_pairs_df))) {
-  subject <- as.character(afr_pairs_df[i,2])
-  gene <- as.character(afr_pairs_df[i,1])
-  zscore_list[i] <- zscore_table[.(gene,subject)]$Zscore
-}
-```
 
 ```{r}
 library(tidyr)
