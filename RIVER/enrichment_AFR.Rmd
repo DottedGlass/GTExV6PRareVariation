@@ -10,6 +10,7 @@ output:
 library(tidyr)
 library(dplyr)
 library(data.table)
+library(ggplot2)
 
 # files needed
 z_scores_file <- '/scratch/groups/abattle4/victor/GTExV6PRareVariationData/archive/data/v8/outliers_medz_zscores.txt'
@@ -63,10 +64,18 @@ rare_count_table <-
 
 enrichment.df  <- merge(count_table,rare_count_table,by="thresh",all=T) %>% mutate(numerator=outlier_rare_pairs/outlier_all_pairs, denominator=inlier_rare_pairs/inlier_all_pairs, enrichment=numerator/denominator)
 
+# confidence intervals
+enrichment.df <- enrichment.df %>% mutate(log_se = sqrt(1/outlier_rare_pairs - 1/outlier_all_pairs + 1/inlier_rare_pairs - 1/inlier_all_pairs), lower_CI = enrichment + exp(1.96*log_se), upper_CI = enrichment - exp(1.96*log_se))
+
+
+# sorting rows by z score threshold
 enrichment.df$sortcol <- as.numeric(gsub("outlier_status_at_thresh_", "", enrichment.df$thresh))
 enrichment.df <- arrange(enrichment.df, sortcol)
 
-plot(x = enrichment.df$sortcol, y = enrichment.df$enrichment)
-## to-do: add confidence intervals
+enrichment_plot <- ggplot(enrichment.df, aes(x = sortcol, y = enrichment)) +
+  geom_point(size = 2) + 
+  geom_errorbar(aes(ymax = upper_CI, ymin = lower_CI))
+print(enrichment_plot + labs(x = "Z-score threshold"))
+
 
 ```
