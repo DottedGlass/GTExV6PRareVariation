@@ -37,32 +37,53 @@ rare_var_pairs$easykey <- paste0(rare_var_pairs$gene,rare_var_pairs$individual)
 pairs.df$easykey <- paste0(pairs.df$GENE,pairs.df$indiv)
 pairs.df$has_rare <- ifelse(pairs.df$easykey %in% rare_var_pairs$easykey,1,0)
 
-# compute enrichment
+# compute enrichment at various Zscore thresholds
 zscore_thresh_list <- seq(1,5, 0.5)
+
+# determine inlier/outlier status based on Zscore thresholds
 for (thresh in zscore_thresh_list) {
-  pairs.df[[paste0("outlier_status_at_thresh_",thresh)]] <- ifelse(pairs.df$zscore > thresh, "outlier","inlier")
+  pairs.df[[paste0("outlier_status_at_thresh_",thresh)]] <- ifelse(abs(pairs.df$zscore) > thresh, "outlier","inlier")
 }
 
-# build frequency table to count inliers and outliers with or without rare variants
-count_table <-
-    pairs.df %>% 
-    gather(contains("thresh"), key=thresh,value=outlier) %>% # make table longer 
+pairs.df <- pairs.df %>% 
+    gather(contains("thresh"), key=thresh,value=outlier)
+
+# sort by gene name and zscore
+pairs.df <- pairs.df[order(pairs.df$GENE,pairs.df$zscore),]
+
+# limit to genes with at least 1 outlier at the given threshold
+count.table.list <- list()
+rare.count.table.list <- list()
+
+for (i in seq_along(zscore_thresh_list)){
+  t <- zscore_thresh_list[i]
+  tmp <- filter(pairs.df, outlier == "outlier", thresh == paste0("outlier_status_at_thresh_",t))
+  genes_keep <- unique(tmp$GENE) # genes with at least 1 outlier individual
+
+  pairs.at.thresh.df <- filter(pairs.df, GENE %in% genes_keep, thresh == paste0("outlier_status_at_thresh_",t))
+
+  # frequency table to count inliers and outliers with or without rare variants
+  count.table.list[[i]] <- pairs.at.thresh.df %>%
     group_by(thresh) %>%
     count(outlier) %>%
-    pivot_wider(names_from=outlier,values_from=n) %>% 
+    pivot_wider(names_from=outlier,values_from=n) %>%
     rename(outlier_all_pairs=outlier, inlier_all_pairs=inlier)
 
-# build frequency table to count inliers and outliers (with  rare variants)
-rare_count_table <- 
-    pairs.df %>%
+  # frequency table to count inliers and outliers (with  rare variants)
+  rare.count.table.list[[i]] <- pairs.at.thresh.df %>%
     filter(has_rare == 1) %>%
-    gather(contains("thresh"), key=thresh,value=outlier) %>% # make a longer table
     group_by(thresh) %>%
     count(outlier) %>%
-    pivot_wider(names_from=outlier,values_from=n) %>% 
-    rename(outlier_rare_pairs=outlier, inlier_rare_pairs=inlier) 
+    pivot_wider(names_from=outlier,values_from=n) %>%
+    rename(outlier_rare_pairs=outlier, inlier_rare_pairs=inlier)
+}
 
-enrichment.df  <- merge(count_table,rare_count_table,by="thresh",all=T) %>% mutate(numerator=outlier_rare_pairs/outlier_all_pairs, denominator=inlier_rare_pairs/inlier_all_pairs, enrichment=numerator/denominator)
+# combine count tables together
+count.table <- rbindlist(count.table.list)
+rare.count.table <- rbindlist(rare.count.table.list)
+
+# compute enrichment
+enrichment.df  <- merge(count.table,rare.count.table,by="thresh",all=T) %>% mutate(numerator=outlier_rare_pairs/outlier_all_pairs, denominator=inlier_rare_pairs/inlier_all_pairs, enrichment=numerator/denominator)
 
 # confidence intervals
 enrichment.df <- enrichment.df %>% mutate(log_se = sqrt(1/outlier_rare_pairs - 1/outlier_all_pairs + 1/inlier_rare_pairs - 1/inlier_all_pairs), lower_CI = enrichment * exp(-1.96*log_se), upper_CI = enrichment * exp(1.96*log_se))
@@ -72,10 +93,50 @@ enrichment.df <- enrichment.df %>% mutate(log_se = sqrt(1/outlier_rare_pairs - 1
 enrichment.df$sortcol <- as.numeric(gsub("outlier_status_at_thresh_", "", enrichment.df$thresh))
 enrichment.df <- arrange(enrichment.df, sortcol)
 
-enrichment_plot <- ggplot(enrichment.df, aes(x = sortcol, y = enrichment)) +
+enrichment.plot <- ggplot(enrichment.df, aes(x = sortcol, y = enrichment)) +
   geom_point(size = 2) + 
+  geom_text(aes(label = outlier_all_pairs), hjust = 0.7, vjust = -4) + 
   geom_errorbar(aes(ymax = upper_CI, ymin = lower_CI))
-print(enrichment_plot + labs(x = "Z-score threshold"))
+print(enrichment.plot + labs(title="Enrichment of rare variants in outlier genes \n(genes have at least 1 outlier individual)", x = "Z-score threshold"))
 
+
+```
+
+```{r}
+# don't limit to genes with at least 1 outlier at the given threshold
+
+# build frequency table to count inliers and outliers with or without rare variants
+count_table <-
+    pairs.df %>%
+    group_by(thresh) %>%
+    count(outlier) %>%
+    pivot_wider(names_from=outlier,values_from=n) %>%
+    rename(outlier_all_pairs=outlier, inlier_all_pairs=inlier)
+
+# build frequency table to count inliers and outliers (with  rare variants)
+rare_count_table <-
+    pairs.df %>%
+    filter(has_rare == 1) %>%
+    group_by(thresh) %>%
+    count(outlier) %>%
+    pivot_wider(names_from=outlier,values_from=n) %>%
+    rename(outlier_rare_pairs=outlier, inlier_rare_pairs=inlier)
+
+# compute enrichment
+enrichment_df  <- merge(count_table,rare_count_table,by="thresh",all=T) %>% mutate(numerator=outlier_rare_pairs/outlier_all_pairs, denominator=inlier_rare_pairs/inlier_all_pairs, enrichment=numerator/denominator)
+
+# confidence intervals
+enrichment_df <- enrichment_df %>% mutate(log_se = sqrt(1/outlier_rare_pairs - 1/outlier_all_pairs + 1/inlier_rare_pairs - 1/inlier_all_pairs), lower_CI = enrichment * exp(-1.96*log_se), upper_CI = enrichment * exp(1.96*log_se))
+
+
+# sorting rows by z score threshold
+enrichment_df$sortcol <- as.numeric(gsub("outlier_status_at_thresh_", "", enrichment_df$thresh))
+enrichment_df <- arrange(enrichment_df, sortcol)
+
+enrichment_plot <- ggplot(enrichment_df, aes(x = sortcol, y = enrichment)) +
+  geom_point(size = 2) + 
+  geom_text(aes(label = outlier_all_pairs), hjust = 0.7, vjust = -4) + 
+  geom_errorbar(aes(ymax = upper_CI, ymin = lower_CI))
+print(enrichment_plot + labs(title="Enrichment of rare variants in outlier genes \n(genes can have no outlier individuals)", x = "Z-score threshold"))
 
 ```
